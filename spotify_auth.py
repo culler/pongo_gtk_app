@@ -73,40 +73,44 @@ class AuthThread(Thread):
         """To stop the thread, send it a special http request."""
         response = urlopen('http://localhost:%d/?stop=YES'%PORT)
         
-def spotify():
-    sp_oauth = oauth2.SpotifyOAuth(PONGO_CLIENT_ID,
-                                   PONGO_CLIENT_SECRET,
-                                   'http://localhost:%d/'%PORT,
-                                   state='pongo_name_2',
-                                   scope=SCOPE,
-                                   cache_path=".cache-" + username )
-    token_info = sp_oauth.get_cached_token()
-    if not token_info:
-        print 'cached token not found'
-        auth_thread = AuthThread()
-        auth_thread.start()
-        print 'http server thread started'
-        auth_url = sp_oauth.get_authorize_url()
-        webbrowser.open(auth_url)
-        print 'waiting for redirect'
-        auth_thread.join(60)
-        if not auth_thread.query_info:
-            print 'Timed out'
-            auth_thread.stop()
-            return
-        query_info = auth_thread.query_info
-        print 'Received authorization for:', query_info['state'][0]
-        code = auth_thread.query_info.get('code')[0]
-        token_info = sp_oauth.get_access_token(code)
-    print 'Access:', token_info['access_token']
-    print 'Refresh:', token_info['refresh_token']
-    print 'TimeToLive:', token_info['expires_in']
-    print 'Scope:', token_info['scope']
-    return spotipy.Spotify(auth=token_info['access_token'])
+
+class Spotify(spotipy.Spotify):
+    def authenticate(self):
+        sp_oauth = oauth2.SpotifyOAuth(PONGO_CLIENT_ID,
+                                       PONGO_CLIENT_SECRET,
+                                       'http://localhost:%d/'%PORT,
+                                       state='pongo_name_2',
+                                       scope=SCOPE,
+                                       cache_path=".cache-" + username )
+        token_info = sp_oauth.get_cached_token()
+        if not token_info:
+            print 'Web authorization required:'
+            auth_thread = AuthThread()
+            auth_thread.start()
+            print 'http server thread started'
+            auth_url = sp_oauth.get_authorize_url()
+            webbrowser.open(auth_url)
+            print 'waiting for redirect'
+            auth_thread.join(60)
+            if not auth_thread.query_info:
+                print 'Timed out'
+                auth_thread.stop()
+                return
+            query_info = auth_thread.query_info
+            print 'Received authorization for:', query_info['state'][0]
+            code = auth_thread.query_info.get('code')[0]
+            token_info = sp_oauth.get_access_token(code)
+        else:
+            print 'Using cached credentials:' 
+        print 'Access:', token_info['access_token']
+        print 'Refresh:', token_info['refresh_token']
+        print 'TimeToLive:', token_info['expires_in']
+        print 'Scope:', token_info['scope']
+        self._auth = token_info['access_token']
 
 if __name__ == '__main__':
-    sp = spotify()
-    if sp:
-        album = sp.current_user_saved_albums()['items'][0]['album'] 
-        print album['id'], album['name']
+    spotify = Spotify()
+    spotify.authenticate()
+    album = spotify.current_user_saved_albums()['items'][0]['album'] 
+    print album['id'], album['name']
     
