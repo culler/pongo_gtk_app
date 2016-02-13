@@ -1,74 +1,78 @@
-from gi.repository import Gtk
+from gi.repository import Gtk, GObject
 from gi.repository import Pango
-import sys
+from threading import Thread
+from zeroconf import ServiceBrowser, Zeroconf
+from . import PongoServer
 
-columns = ["Pongo Name"]
+class PongoListener(object):
+    def __init__(self, server_list):
+        self.server_list = server_list
+        
+    def remove_service(self, zeroconf, service_type, name):
+        GObject.idle_add(self.server_list.remove_server,
+                         self.pongo_server(service_type, name, zeroconf))
+        
+    def add_service(self, zeroconf, service_type, name):
+        GObject.idle_add(self.server_list.add_server,
+                         self.pongo_server(service_type, name, zeroconf))
 
-pongos = [['Pongo One'], ['Pongo Two'], ['Pongo Three']]
+    def pongo_server(self, service_type, name, zeroconf):
+        info = zeroconf.get_service_info(service_type, name)
+        address = '.'.join([str(ord(c)) for c in info.address]) + ':%s'%info.port
+        return PongoServer(info.name, address)
 
-class CellRendererButton(Gtk.CellRenderer):
-    def __init__(self):
-        Gtk.CellRenderer.__init__(self)
+class PongoServerRow(Gtk.ListBoxRow):
+    def __init__(self, server):
+        super(Gtk.ListBoxRow, self).__init__()
+        self.server = server
+        self.label = label = Gtk.Label(server.name)
+        self.box = box = Gtk.EventBox()
+        box.connect('enter_notify_event', self.mouse_enter)
+        box.connect('leave_notify_event', self.mouse_leave)
+        box.add(label)
+        self.add(box)
 
-    def do_get_size(self, widget, cell_area):
-        buttonHeight = cell_area.height
-        buttonWidth = buttonHeight
-        return (0, 0, buttonWidth, buttonHeight)
+    def mouse_enter(self, widget, event, data=None):
+        self.label.set_markup('<b>%s</b>'%self.server.name)
 
-    def do_render(self, window, widget, background_area, cell_area, expose_area, flags):
-        style = widget.get_style()
-        x, y, buttonWidth, buttonHeight = self.get_size()
-        style.paint_box(window,
-                        widget.get_state(),
-                        Gtk.SHADOW_ETCHED_OUT,
-                        expose_area,
-                        widget,
-                        None,
-                        0, 0, buttonWidth, buttonHeight)
+    def mouse_leave(self, widget, event, data=None):
+        self.label.set_text(self.server.name)
+        
+class PongoServerList(Gtk.ListBox):
+    def __init__(self, server_list):
+        super(Gtk.ListBox, self).__init__()
+        self.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.server_list = server_list
+        self.connect('row_activated', self.server_select)
+        def sort_function(row1, row2, data, notify_destroy):
+            return row1.server.name.lower() > row2.server.name.lower()
+        self.set_sort_func(sort_function, None, False)
+        for server in server_list:
+            self.add(PongoServerRow(server))
+        self.show_all()
+        zeroconf = Zeroconf()
+        listener = PongoListener(self)
+        self.updater = ServiceBrowser(zeroconf, "_pongo._tcp.local.", listener)
 
+    def server_select(self, widget, row):
+        print row.server;
 
-class FindPongoWindow(Gtk.ApplicationWindow):
+    def remove_server(self, server):
+        for row in self.get_children():
+            if row.server == server:
+                self.remove(row)
+                break
+        self.show_all()
+        print [row.server for row in self.get_children()]
 
-    def __init__(self, app):
-        Gtk.Window.__init__(self, title="Pongo", application=app)
-        self.set_default_size(250, 100)
-        self.set_border_width(10)
-        listmodel = Gtk.ListStore(str)
-        # append the values in the model
-        for i in range(len(pongos)):
-            listmodel.append(pongos[i])
+    def add_server(self, server):
+        for row in self.get_children():
+            if row.server == server:
+                return
+        self.add(PongoServerRow(server))
+        self.show_all()
+        print [row.server for row in self.get_children()]
 
-        # a treeview to see the data stored in the model
-        view = Gtk.TreeView(model=listmodel)
-
-        # for each column
-        for i in range(len(columns)):
-            cell = Gtk.CellRendererText()
-            cell.props.weight_set = True
-            cell.props.weight = Pango.Weight.BOLD
-            col = Gtk.TreeViewColumn(columns[i], cell, text=i)
-            view.append_column(col)
-            view.set_headers_visible(False)
-
-        # when a row is selected, it emits a signal
-        view.get_selection().connect("changed", self.on_changed)
-
-        # the label we use to show the selection
-        self.label = Gtk.Label()
-        self.label.set_text("")
-
-        # a grid to attach the widgets
-        grid = Gtk.Grid()
-        grid.attach(view, 0, 0, 1, 1)
-        grid.attach(self.label, 0, 1, 1, 1)
-
-        # attach the grid to the window
-        self.add(grid)
-
-    def on_changed(self, selection):
-        # get the model and the iterator that points at the data in the model
-        (model, iter) = selection.get_selected()
-        # set the label to a new value depending on the selection
-        self.label.set_text("\n %s" %
-                            (model[iter][0]))
-        return True
+    def shutdown(self):
+        self.updater.cancel()
+        self.updater = None
