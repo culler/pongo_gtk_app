@@ -9,17 +9,23 @@ class PongoListener(object):
         self.server_list = server_list
         
     def remove_service(self, zeroconf, service_type, name):
-        GObject.idle_add(self.server_list.remove_server,
-                         self.pongo_server(service_type, name, zeroconf))
-        
+        # We only get the name, not the address, so we are forced to remove
+        # all servers with the same name.  Hopefully people will not create
+        # multiple servers with the same name.
+        for row in self.server_list:
+            if row.server.name == name.split('.')[0]:
+                GObject.idle_add(self.server_list.remove_server, row.server)
+
     def add_service(self, zeroconf, service_type, name):
-        GObject.idle_add(self.server_list.add_server,
-                         self.pongo_server(service_type, name, zeroconf))
+        server = self.pongo_server(service_type, name, zeroconf)
+        if server:
+            GObject.idle_add(self.server_list.add_server, server)
 
     def pongo_server(self, service_type, name, zeroconf):
         info = zeroconf.get_service_info(service_type, name)
-        address = '.'.join([str(ord(c)) for c in info.address]) + ':%s'%info.port
-        return PongoServer(info.name.split('.')[0], address)
+        if info:
+            address = '.'.join([str(ord(c)) for c in info.address]) + ':%s'%info.port
+            return PongoServer(info.name.split('.')[0], address)
 
 class PongoServerRow(Gtk.ListBoxRow):
     def __init__(self, server):
@@ -39,6 +45,7 @@ class PongoServerRow(Gtk.ListBoxRow):
         self.label.set_text(self.server.name)
         
 class PongoServerList(Gtk.ListBox):
+    
     def __init__(self, server_list):
         super(Gtk.ListBox, self).__init__()
         self.set_selection_mode(Gtk.SelectionMode.NONE)
