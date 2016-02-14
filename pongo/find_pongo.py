@@ -45,10 +45,11 @@ class PongoServerRow(Gtk.ListBoxRow):
         
 class FindPongo(Gtk.Grid):
     
-    def __init__(self, server_list):
+    def __init__(self, app):
         super(Gtk.Grid, self).__init__()
         self.props.row_spacing = 10
-        self.server_list = server_list
+        self.app = app
+        self.server_list = server_list = app.servers
         self.listbox = listbox = Gtk.ListBox()
         listbox.set_selection_mode(Gtk.SelectionMode.NONE)
         listbox.connect('row_activated', self.server_select)
@@ -65,7 +66,7 @@ class FindPongo(Gtk.Grid):
         self.show_all()
 
     def server_select(self, widget, row):
-        print row.server;
+        self.app.play_pongo(row.server)
 
     def servers(self):
         return [row.server for row in self.listbox.get_children()]
