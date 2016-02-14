@@ -10,4 +10,4 @@ class PongoServer:
         return hash(self.name)
 
     def __repr__(self):
-        return 'Pongo %s (%s)'%(self.name, self.ip_address)
+        return '%s (%s)'%(self.name, self.ip_address)
