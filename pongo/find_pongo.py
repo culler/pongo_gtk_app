@@ -5,21 +5,20 @@ from zeroconf import ServiceBrowser, Zeroconf
 from . import PongoServer
 
 class PongoListener(object):
-    def __init__(self, server_list):
-        self.server_list = server_list
+    def __init__(self, finder):
+        self.finder = finder
         
     def remove_service(self, zeroconf, service_type, name):
         # We only get the name, not the address, so we are forced to remove
         # all servers with the same name.  Hopefully people will not create
         # multiple servers with the same name.
-        for row in self.server_list:
-            if row.server.name == name.split('.')[0]:
-                GObject.idle_add(self.server_list.remove_server, row.server)
+        for server in self.finder.servers():
+            GObject.idle_add(self.finder.remove_server, server)
 
     def add_service(self, zeroconf, service_type, name):
         server = self.pongo_server(service_type, name, zeroconf)
         if server:
-            GObject.idle_add(self.server_list.add_server, server)
+            GObject.idle_add(self.finder.add_server, server)
 
     def pongo_server(self, service_type, name, zeroconf):
         info = zeroconf.get_service_info(service_type, name)
@@ -44,40 +43,50 @@ class PongoServerRow(Gtk.ListBoxRow):
     def mouse_leave(self, widget, event, data=None):
         self.label.set_text(self.server.name)
         
-class PongoServerList(Gtk.ListBox):
+class FindPongo(Gtk.Grid):
     
     def __init__(self, server_list):
-        super(Gtk.ListBox, self).__init__()
-        self.set_selection_mode(Gtk.SelectionMode.NONE)
+        super(Gtk.Grid, self).__init__()
+        self.props.row_spacing = 10
         self.server_list = server_list
-        self.connect('row_activated', self.server_select)
+        self.listbox = listbox = Gtk.ListBox()
+        listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+        listbox.connect('row_activated', self.server_select)
         def sort_function(row1, row2, data, notify_destroy):
             return row1.server.name.lower() > row2.server.name.lower()
-        self.set_sort_func(sort_function, None, False)
+        listbox.set_sort_func(sort_function, None, False)
         for server in server_list:
-            self.add(PongoServerRow(server))
-        self.show_all()
+            listbox.add(PongoServerRow(server))
+        self.attach(Gtk.Label("Select a local Pongo:"), 0, 0, 1, 1)
+        self.attach(listbox, 0, 1, 1, 1)
         zeroconf = Zeroconf()
         listener = PongoListener(self)
         self.updater = ServiceBrowser(zeroconf, "_pongo._tcp.local.", listener)
+        self.show_all()
 
     def server_select(self, widget, row):
         print row.server;
 
+    def servers(self):
+        return [row.server for row in self.listbox.get_children()]
+    
     def remove_server(self, server):
-        for row in self.get_children():
+        listbox = self.listbox
+        for row in listbox.get_children():
             if row.server == server:
-                self.remove(row)
+                listbox.remove(row)
                 break
-        self.show_all()
+        listbox.show_all()
 
     def add_server(self, server):
-        for row in self.get_children():
+        listbox = self.listbox
+        for row in listbox.get_children():
             if row.server == server:
                 return
-        self.add(PongoServerRow(server))
-        self.show_all()
+        listbox.add(PongoServerRow(server))
+        listbox.show_all()
 
     def shutdown(self):
-        self.updater.cancel()
+        if self.updater:
+            self.updater.cancel()
         self.updater = None
