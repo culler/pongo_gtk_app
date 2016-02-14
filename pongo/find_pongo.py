@@ -19,7 +19,7 @@ class PongoListener(object):
     def pongo_server(self, service_type, name, zeroconf):
         info = zeroconf.get_service_info(service_type, name)
         address = '.'.join([str(ord(c)) for c in info.address]) + ':%s'%info.port
-        return PongoServer(info.name, address)
+        return PongoServer(info.name.split('.')[0], address)
 
 class PongoServerRow(Gtk.ListBoxRow):
     def __init__(self, server):
@@ -63,7 +63,6 @@ class PongoServerList(Gtk.ListBox):
                 self.remove(row)
                 break
         self.show_all()
-        print [row.server for row in self.get_children()]
 
     def add_server(self, server):
         for row in self.get_children():
@@ -71,7 +70,6 @@ class PongoServerList(Gtk.ListBox):
                 return
         self.add(PongoServerRow(server))
         self.show_all()
-        print [row.server for row in self.get_children()]
 
     def shutdown(self):
         self.updater.cancel()

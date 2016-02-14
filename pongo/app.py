@@ -2,17 +2,10 @@ import sys, signal
 from gi.repository import Gtk, Gdk, GObject
 from . import PongoServer
 from .find_pongo import PongoServerList
+from .style import css
 
 style = Gtk.CssProvider()
-
-css = """
-GtkWindow, GtkLabel, GtkListBox {
-  background-color: #ffffff;
-  font-size: 16px;
-}
-"""
 style.load_from_data(css)
-
 Gtk.StyleContext.add_provider_for_screen(
     Gdk.Screen.get_default(), 
     style,     
