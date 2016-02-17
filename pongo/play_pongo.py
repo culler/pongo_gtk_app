@@ -40,8 +40,6 @@ class PlayPongo(Gtk.Window):
             return False
 
     def load_error(self, view, frame, uri, error):
-        print 'Load Error'
-        print 'URI:', uri
         self.webview.load_string("""
         <html>
         <head><title>Error</title></head>
