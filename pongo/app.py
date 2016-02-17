@@ -1,4 +1,8 @@
 import sys, signal
+import gi
+gi.require_version('Gtk', '3.0')
+gi.require_version('WebKit', '3.0')
+gi.require_version('Gst', '1.0')
 from gi.repository import Gtk, Gdk, GObject
 from . import PongoServer
 from .find_pongo import FindPongo
