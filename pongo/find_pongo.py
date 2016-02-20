@@ -4,7 +4,16 @@ from threading import Thread
 from zeroconf import ServiceBrowser, Zeroconf
 from . import PongoServer
 
+"""
+Implementation of the FindPongo activity.
+"""
+
 class PongoListener(object):
+    """
+    Listens for services of type _http._tcp whose TXT record specifies path=pongo.
+    When such a service is discovered, a row containing its name is added to the
+    PongoFinder window.  When the service disappears, the row is removed.
+    """
     def __init__(self, finder):
         self.finder = finder
         
@@ -23,10 +32,15 @@ class PongoListener(object):
     def pongo_server(self, service_type, name, zeroconf):
         info = zeroconf.get_service_info(service_type, name)
         if info:
-            address = '.'.join([str(ord(c)) for c in info.address]) + ':%s'%info.port
-            return PongoServer(info.name.split('.')[0], address)
+            if info.properties['path'] == 'pongo':
+                address = '.'.join([str(ord(c)) for c in info.address]) + ':%s'%info.port
+                return PongoServer(info.name.split('.')[0], address)
 
 class PongoServerRow(Gtk.ListBoxRow):
+    """
+    A row in a listbox displaying the name of a Pongo server.  Hovering over the
+    row changes the font-type to bold.  Clicking on the row opens a browser window.
+    """
     def __init__(self, server):
         super(Gtk.ListBoxRow, self).__init__()
         self.server = server
@@ -44,7 +58,9 @@ class PongoServerRow(Gtk.ListBoxRow):
         self.label.set_text(self.server.name)
         
 class FindPongo(Gtk.Grid):
-    
+    """
+    A listbox displaying a PongoServerRow for each Pongo server on the local network.
+    """
     def __init__(self, app):
         super(Gtk.Grid, self).__init__()
         self.props.row_spacing = 10
@@ -62,7 +78,7 @@ class FindPongo(Gtk.Grid):
         self.attach(listbox, 0, 1, 1, 1)
         zeroconf = Zeroconf()
         listener = PongoListener(self)
-        self.updater = ServiceBrowser(zeroconf, "_pongo._tcp.local.", listener)
+        self.updater = ServiceBrowser(zeroconf, "_http._tcp.local.", listener)
         self.show_all()
 
     def server_select(self, widget, row):
