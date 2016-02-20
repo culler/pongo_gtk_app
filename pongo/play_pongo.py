@@ -2,8 +2,16 @@ from gi.repository import Gtk, WebKit
 from urlparse import urlparse, parse_qs
 from . import PongoServer
 
+"""
+Implementation of the PlayPongo activity.
+"""
+
 class PlayPongo(Gtk.Window):
-    
+    """
+    A WebView window connected to a Pongo server.  This WebView traps connections
+    to localhost:8800, which is the redirect address used by Spotify authentication
+    for the Pongo Spotify app.
+    """
     def __init__(self, app, pongo_server):
         super(Gtk.Window, self).__init__()
         self.connect("destroy", app.player_destroyed)
@@ -13,16 +21,18 @@ class PlayPongo(Gtk.Window):
         webview.connect("load-error", self.load_error)
         scroller.add(webview)
         self.add(scroller)
-        self.load(pongo_server)
-        self.set_default_size(900, 600)
-        self.show_all()
-
-    def load(self, pongo_server):
         self.pongo_server = pongo_server
         self.set_title('Pongo on %s'%pongo_server.name)
         self.webview.load_uri('http://%s'%pongo_server.ip_address)
+        self.set_default_size(900, 600)
+        self.show_all()
 
     def navigate(self, view, frame, request, action, decision):
+        """
+        Watch for the redirect address from Spotify authentication.
+        When found redirect the redirect to the spotify_auth view on
+        the Pongo server.
+        """
         parts = urlparse(request.get_uri())
         if parts.hostname != 'localhost' or parts.port != 8880:
             decision.use()
@@ -40,6 +50,9 @@ class PlayPongo(Gtk.Window):
             return False
 
     def load_error(self, view, frame, uri, error):
+        """
+        Custom error screen to display when the http connection fails.
+        """
         self.webview.load_string("""
         <html>
         <head><title>Error</title></head>
