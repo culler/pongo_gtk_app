@@ -14,13 +14,14 @@ class PlayPongo(Gtk.Window):
     """
     def __init__(self, app, pongo_server):
         super(Gtk.Window, self).__init__()
-        self.pongo_server = pongo_server
+        self.app, self.pongo_server = app, pongo_server
         self.connect("destroy", app.player_destroyed)
         self.header = header = Gtk.HeaderBar()
         header.set_show_close_button(True)
         header.props.title = pongo_server.name
         button = Gtk.Button()
         button.add(Gtk.Arrow(Gtk.ArrowType.LEFT, Gtk.ShadowType.NONE))
+        button.connect("clicked", self.back_button)
         header.pack_end(button)
         self.set_titlebar(header)
         self.scroller = scroller = Gtk.ScrolledWindow()
@@ -33,6 +34,17 @@ class PlayPongo(Gtk.Window):
         self.set_default_size(900, 600)
         self.show_all()
 
+    def back_button(self, widget):
+        """
+        Go back in the WebView history unless the path is /.  In that
+        case, open the finder.
+        """
+        parts = urlparse(self.webview.get_uri())
+        if parts.path == "/":
+            self.app.back_to_finder()
+        else:
+            self.webview.go_back()
+        
     def navigate(self, view, frame, request, action, decision):
         """
         Watch for the redirect address from Spotify authentication.
