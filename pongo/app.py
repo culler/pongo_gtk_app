@@ -24,11 +24,13 @@ class PongoApplication(Gtk.Application):
         Gtk.Application.__init__(self)
         self.window = None
         self.player = None
+        self.restore_finder = False
                            
     def do_activate(self):
         if not self.window:
             self.window = window = Gtk.ApplicationWindow(application=self,
                                                 title="Pongo")
+            window.connect("destroy", self.quit_app)
             window.set_name("finderWindow")
             window.set_size_request(400, 600)
             window.move(75, 50)
@@ -47,15 +49,24 @@ class PongoApplication(Gtk.Application):
         self.window.iconify()
 
     def player_destroyed(self, widget):
-        self.shutdown()
-        self.quit()
+        if self.restore_finder:
+            self.restore_finder = False
+        else:
+            self.quit_app()
         
+    def back_to_finder(self):
+        self.window.present()
+        self.restore_finder = True
+        self.player.destroy()
+        self.player == None
+            
     def do_startup(self):
         Gtk.Application.do_startup(self)
 
-    def shutdown(self):
+    def quit_app(self, widget=None):
         if self.finder:
             self.finder.shutdown()
+        self.quit()
         
 if __name__ == '__main__':
 
@@ -63,5 +74,5 @@ if __name__ == '__main__':
     app = PongoApplication()
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     exit_status = app.run(sys.argv)
-    app.shutdown()
+    app.quit_app()
     sys.exit(exit_status)
