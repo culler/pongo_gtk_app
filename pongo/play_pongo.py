@@ -14,15 +14,21 @@ class PlayPongo(Gtk.Window):
     """
     def __init__(self, app, pongo_server):
         super(Gtk.Window, self).__init__()
+        self.pongo_server = pongo_server
         self.connect("destroy", app.player_destroyed)
+        self.header = header = Gtk.HeaderBar()
+        header.set_show_close_button(True)
+        header.props.title = pongo_server.name
+        button = Gtk.Button()
+        button.add(Gtk.Arrow(Gtk.ArrowType.LEFT, Gtk.ShadowType.NONE))
+        header.pack_end(button)
+        self.set_titlebar(header)
         self.scroller = scroller = Gtk.ScrolledWindow()
         self.webview = webview = WebKit.WebView()
         webview.connect("navigation-policy-decision-requested", self.navigate)
         webview.connect("load-error", self.load_error)
         scroller.add(webview)
         self.add(scroller)
-        self.pongo_server = pongo_server
-        self.set_title('Pongo on %s'%pongo_server.name)
         self.webview.load_uri('http://%s'%pongo_server.ip_address)
         self.set_default_size(900, 600)
         self.show_all()

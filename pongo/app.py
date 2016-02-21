@@ -29,6 +29,7 @@ class PongoApplication(Gtk.Application):
         if not self.window:
             self.window = window = Gtk.ApplicationWindow(application=self,
                                                 title="Pongo")
+            window.set_name("finderWindow")
             window.set_size_request(400, 600)
             window.move(75, 50)
             window.set_border_width(10)
