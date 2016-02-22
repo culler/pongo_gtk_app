@@ -30,10 +30,10 @@ class PlayPongo(Gtk.Window):
         webview.connect("load-error", self.load_error)
         scroller.add(webview)
         self.add(scroller)
-        self.webview.load_uri('http://%s'%pongo_server.ip_address)
+        self.webview.load_uri('http://%s'%self.pongo_server.ip_address)
         self.set_default_size(900, 600)
         self.show_all()
-
+        
     def back_button(self, widget):
         """
         Go back in the WebView history unless the path is /.  In that
