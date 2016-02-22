@@ -40,12 +40,9 @@ class PongoApplication(Gtk.Application):
         self.window.present()
 
     def play_pongo(self, server):
-        if not self.player:
-            self.player = player = PlayPongo(self, server)
-            player.move(75, 75)
-        else:
-            self.player.load(server)
-        self.player.show_all()
+        self.player = player = PlayPongo(self, server)
+        player.move(75, 75)
+        player.show_all()
         self.window.iconify()
 
     def player_destroyed(self, widget):
@@ -58,7 +55,7 @@ class PongoApplication(Gtk.Application):
         self.window.present()
         self.restore_finder = True
         self.player.destroy()
-        self.player == None
+        self.player = None
             
     def do_startup(self):
         Gtk.Application.do_startup(self)
