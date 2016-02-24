@@ -19,10 +19,20 @@ class PlayPongo(Gtk.Window):
         self.header = header = Gtk.HeaderBar()
         header.set_show_close_button(True)
         header.props.title = pongo_server.name
-        button = Gtk.Button()
-        button.add(Gtk.Arrow(Gtk.ArrowType.LEFT, Gtk.ShadowType.NONE))
-        button.connect("clicked", self.back_button)
-        header.pack_end(button)
+        settings_menu = Gtk.Menu()
+        settings_item = Gtk.MenuItem(label="Settings")
+        settings_item.connect("activate", self.settings_action)
+        settings_item.show()
+        settings_menu.append(settings_item)
+        menu_button = Gtk.MenuButton(visible=True, direction=Gtk.ArrowType.NONE,
+                                         popup=settings_menu)
+        header.pack_end(menu_button)
+        reload_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_REFRESH))
+        reload_button.connect("clicked", self.reload_action)
+        header.pack_start(reload_button)
+        back_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_BACK))
+        back_button.connect("clicked", self.back_action)
+        header.pack_start(back_button)
         self.set_titlebar(header)
         self.scroller = scroller = Gtk.ScrolledWindow()
         self.webview = webview = WebKit.WebView()
@@ -30,11 +40,12 @@ class PlayPongo(Gtk.Window):
         webview.connect("load-error", self.load_error)
         scroller.add(webview)
         self.add(scroller)
-        self.webview.load_uri('http://%s'%self.pongo_server.ip_address)
+        self.base_url = base_url = 'http://%s/'%self.pongo_server.ip_address
+        self.webview.load_uri(base_url)
         self.set_default_size(900, 600)
         self.show_all()
         
-    def back_button(self, widget):
+    def back_action(self, widget):
         """
         Go back in the WebView history unless the path is /.  In that
         case, open the finder.
@@ -44,7 +55,19 @@ class PlayPongo(Gtk.Window):
             self.app.back_to_finder()
         else:
             self.webview.go_back()
-        
+
+    def reload_action(self, widget):
+        """
+        Reload the current page.
+        """
+        self.webview.reload_bypass_cache()
+
+    def settings_action(self, widget):
+        """
+        Load the settings page.
+        """
+        self.webview.load_uri(self.base_url + 'pongo/settings')
+            
     def navigate(self, view, frame, request, action, decision):
         """
         Watch for the redirect address from Spotify authentication.
