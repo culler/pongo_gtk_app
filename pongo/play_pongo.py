@@ -17,7 +17,7 @@ class PlayPongo(Gtk.Window):
         self.app, self.pongo_server = app, pongo_server
         self.connect("destroy", app.player_destroyed)
         self.header = header = Gtk.HeaderBar()
-        # Black corners on header caused by Bug #1437814
+        # Black corners on header bar caused by Bug #1437814
         header.set_show_close_button(True)
         header.props.title = pongo_server.name
         back_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_BACK))
