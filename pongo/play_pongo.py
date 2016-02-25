@@ -17,8 +17,12 @@ class PlayPongo(Gtk.Window):
         self.app, self.pongo_server = app, pongo_server
         self.connect("destroy", app.player_destroyed)
         self.header = header = Gtk.HeaderBar()
+        # Black corners on header caused by Bug #1437814
         header.set_show_close_button(True)
         header.props.title = pongo_server.name
+        back_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_BACK))
+        back_button.connect("clicked", self.back_action)
+        header.pack_start(back_button)
         settings_menu = Gtk.Menu()
         settings_item = Gtk.MenuItem(label="Settings")
         settings_item.connect("activate", self.settings_action)
@@ -29,10 +33,7 @@ class PlayPongo(Gtk.Window):
         header.pack_end(menu_button)
         reload_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_REFRESH))
         reload_button.connect("clicked", self.reload_action)
-        header.pack_start(reload_button)
-        back_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_BACK))
-        back_button.connect("clicked", self.back_action)
-        header.pack_start(back_button)
+        header.pack_end(reload_button)
         self.set_titlebar(header)
         self.scroller = scroller = Gtk.ScrolledWindow()
         self.webview = webview = WebKit.WebView()
