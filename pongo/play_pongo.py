@@ -1,4 +1,4 @@
-from gi.repository import Gtk, WebKit
+from gi.repository import Gtk, Gdk, WebKit
 from urlparse import urlparse, parse_qs
 from . import PongoServer
 
@@ -16,6 +16,7 @@ class PlayPongo(Gtk.Window):
         super(Gtk.Window, self).__init__()
         self.app, self.pongo_server = app, pongo_server
         self.connect("destroy", app.player_destroyed)
+        self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         self.header = header = Gtk.HeaderBar()
         # Black corners on header bar caused by Bug #1437814
         header.set_show_close_button(True)
@@ -34,6 +35,9 @@ class PlayPongo(Gtk.Window):
         reload_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_REFRESH))
         reload_button.connect("clicked", self.reload_action)
         header.pack_end(reload_button)
+        paste_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_PASTE))
+        paste_button.connect("clicked", self.paste_action)
+        header.pack_end(paste_button)
         self.set_titlebar(header)
         self.scroller = scroller = Gtk.ScrolledWindow()
         self.webview = webview = WebKit.WebView()
@@ -68,7 +72,19 @@ class PlayPongo(Gtk.Window):
         Load the settings page.
         """
         self.webview.load_uri(self.base_url + 'pongo/settings')
-            
+
+    def paste_action(self, event):
+        id = None
+        uri = self.clipboard.wait_for_text()
+        if uri.startswith('spotify:album:'):
+            id = uri.split(':')[2]
+        elif uri.startswith('http'):
+            path = urlparse(uri).path
+            if path.startswith('/album'):
+                id = path.split('/')[-1]
+        if id:
+            self.webview.load_uri(self.base_url + 'album/%s'%id)
+
     def navigate(self, view, frame, request, action, decision):
         """
         Watch for the redirect address from Spotify authentication.
