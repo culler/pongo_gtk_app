@@ -39,6 +39,9 @@ class PlayPongo(Gtk.Window):
         reload_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_REFRESH))
         reload_button.connect("clicked", self.reload_action)
         header.pack_end(reload_button)
+        search_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_FIND))
+        search_button.connect("clicked", self.enable_search)
+        header.pack_end(search_button)
         self.set_titlebar(header)
         self.scroller = scroller = Gtk.ScrolledWindow()
         self.webview = webview = WebKit.WebView()
@@ -68,6 +71,12 @@ class PlayPongo(Gtk.Window):
         """
         self.webview.reload_bypass_cache()
 
+    def enable_search(self, widget):
+        """
+        Expose the search box.
+        """
+        pass
+    
     def settings_action(self, widget):
         """
         Load the settings page.
