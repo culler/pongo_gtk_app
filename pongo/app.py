@@ -32,7 +32,7 @@ class PongoApplication(Gtk.Application):
                                                 title="Pongo")
             window.connect("destroy", self.quit_app)
             window.set_name("finderWindow")
-            window.set_size_request(400, 600)
+            window.set_size_request(432, 768)
             window.move(75, 50)
             window.set_border_width(10)
             self.finder = finder = FindPongo(self)
