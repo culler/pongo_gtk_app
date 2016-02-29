@@ -48,7 +48,7 @@ class PlayPongo(Gtk.Window):
         self.add(scroller)
         self.base_url = base_url = 'http://%s/'%self.pongo_server.ip_address
         self.webview.load_uri(base_url)
-        self.set_default_size(900, 600)
+        self.set_default_size(432, 768)
         self.show_all()
         
     def back_action(self, widget):
