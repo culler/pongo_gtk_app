@@ -93,7 +93,7 @@ class PlayPongo(Gtk.Window):
             if path.startswith('/album'):
                 id = path.split('/')[-1]
         if id:
-            self.webview.load_uri(self.base_url + 'album/%s'%id)
+            self.webview.load_uri(self.base_url + 'spotify/album/%s'%id)
 
     def navigate(self, view, frame, request, action, decision):
         """
