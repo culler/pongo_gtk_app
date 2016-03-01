@@ -104,11 +104,12 @@ class PlayPongo(Gtk.Window):
             self.box.remove(self.search_box)
             self.search_showing = False
             self.show_all()
-            # BUG: the search match is selected.  I can find no way to
-            # clear the selection (except reloading the page), so the
-            # text remains highlighted after the search box is closed.
-            # Clicking on an inactive part of the page will
-            # unhighlight the selection, though
+            # BUG: When you search for text, the next matching text
+            # gets selected.  I can find no way to clear the selection
+            # (except reloading the page).  So the text remains
+            # highlighted after the search box is closed.  Clicking on
+            # an inactive part of the page will unhighlight the
+            # selection, though
 
     def search_up(self, widget):
         self.webview.search_text(self.search_entry.get_text(),
