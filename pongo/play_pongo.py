@@ -15,6 +15,8 @@ class PlayPongo(Gtk.Window):
     def __init__(self, app, pongo_server):
         super(Gtk.Window, self).__init__()
         self.app, self.pongo_server = app, pongo_server
+        self.set_default_size(432, 768)
+        self.search_showing = False
         self.connect("destroy", app.player_destroyed)
         self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         self.header = header = Gtk.HeaderBar()
@@ -40,7 +42,7 @@ class PlayPongo(Gtk.Window):
         reload_button.connect("clicked", self.reload_action)
         header.pack_end(reload_button)
         search_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_FIND))
-        search_button.connect("clicked", self.enable_search)
+        search_button.connect("clicked", self.show_search)
         header.pack_end(search_button)
         self.set_titlebar(header)
         self.scroller = scroller = Gtk.ScrolledWindow()
@@ -48,11 +50,25 @@ class PlayPongo(Gtk.Window):
         webview.connect("navigation-policy-decision-requested", self.navigate)
         webview.connect("load-error", self.load_error)
         scroller.add(webview)
-        self.add(scroller)
+        self.box = box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.add(box)
+        box.pack_end(scroller, True, True, 0)
+        self.show_all()
         self.base_url = base_url = 'http://%s/'%self.pongo_server.ip_address
         self.webview.load_uri(base_url)
-        self.set_default_size(432, 768)
-        self.show_all()
+        self.search_box = search_box = Gtk.Box()
+        self.search_entry = search = Gtk.Entry(text='Search')
+        search.set_width_chars(30)
+        hide = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_CLOSE))
+        up = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_UP))
+        down = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_DOWN))
+        search_box.pack_end(hide, False, False, 0)
+        search_box.pack_start(search, False, False, 0)
+        search_box.pack_start(up, False, False, 0)
+        search_box.pack_start(down, False, False, 0)
+        up.connect("clicked", self.search_up)
+        down.connect("clicked", self.search_down)
+        hide.connect("clicked", self.hide_search)
         
     def back_action(self, widget):
         """
@@ -71,10 +87,28 @@ class PlayPongo(Gtk.Window):
         """
         self.webview.reload_bypass_cache()
 
-    def enable_search(self, widget):
+    def show_search(self, widget):
         """
         Expose the search box.
         """
+        if not self.search_showing:
+            self.box.pack_start(self.search_box, False, False, 0)
+            self.search_showing = True
+            self.show_all()
+            
+    def hide_search(self, widget):
+        """
+        Hide the search box.
+        """
+        if  self.search_showing:
+            self.box.remove(self.search_box)
+            self.search_showing = False
+            self.show_all()
+
+    def search_up(self, widget):
+        pass
+
+    def search_down(self, widget):
         pass
     
     def settings_action(self, widget):
