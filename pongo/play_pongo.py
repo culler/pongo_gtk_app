@@ -168,13 +168,14 @@ class PlayPongo(Gtk.Window):
         <head><title>Error</title></head>
         <body>
         <h1 style="text-align: center;">So Sorry!</h1>
-        <h2 style="text-align: center;">We were unable to connect to %s.</h2>
+        <h2 style="text-align: center; font-size: 24px;">Could not connect to %s.</h2>
         <div style="text-align: center;">
         <a style="-webkit-appearance: button;
                   text-decoration: none;
                   color: initial;
                   padding: 5px;"
            href="%s">Try again</a>
+        </div>
         </body>
         </html>"""%(self.pongo_server.name, uri), 'text/html', 'UTF-8', '')
         return True
