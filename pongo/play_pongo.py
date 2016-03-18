@@ -144,7 +144,6 @@ class PlayPongo(Gtk.Window):
         When found redirect the redirect to the spotify_auth view on
         the Pongo server.
         """
-        print self.cookiejar.all_cookies()
         parts = urlparse(request.get_uri())
         if parts.hostname != 'localhost' or parts.port != 8880:
             decision.use()
