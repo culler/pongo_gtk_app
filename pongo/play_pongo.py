@@ -1,4 +1,4 @@
-from gi.repository import Gtk, Gdk, WebKit
+from gi.repository import Gtk, Gdk, WebKit, Soup
 from urlparse import urlparse, parse_qs
 from . import PongoServer
 
@@ -49,6 +49,7 @@ class PlayPongo(Gtk.Window):
         self.webview = webview = WebKit.WebView()
         webview.connect("navigation-policy-decision-requested", self.navigate)
         webview.connect("load-error", self.load_error)
+        self.cookiejar = WebKit.get_default_session().get_feature(Soup.CookieJar)
         scroller.add(webview)
         self.box = box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(box)
@@ -76,7 +77,7 @@ class PlayPongo(Gtk.Window):
         case, open the finder.
         """
         parts = urlparse(self.webview.get_uri())
-        if parts.path == "/":
+        if not parts.path or parts.path == "/":
             self.app.back_to_finder()
         else:
             self.webview.go_back()
@@ -143,12 +144,15 @@ class PlayPongo(Gtk.Window):
         When found redirect the redirect to the spotify_auth view on
         the Pongo server.
         """
+        print self.cookiejar.all_cookies()
         parts = urlparse(request.get_uri())
         if parts.hostname != 'localhost' or parts.port != 8880:
             decision.use()
             return True
         else:
             decision.ignore()
+            for cookie in self.cookiejar.all_cookies():
+                self.cookiejar.delete_cookie(cookie)
             query_info = parse_qs(parts.query)
             return_page = query_info['state'][0]
             auth_code = query_info['code'][0]
