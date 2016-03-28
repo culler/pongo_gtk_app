@@ -26,15 +26,7 @@ class PlayPongo(Gtk.Window):
         back_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_BACK))
         back_button.connect("clicked", self.back_action)
         header.pack_start(back_button)
-        app_menu = Gtk.Menu()
-        settings_item = Gtk.MenuItem(label="Settings")
-        settings_item.connect("activate", self.settings_action)
-        settings_item.show()
-        app_menu.append(settings_item)
-        paste_item = Gtk.MenuItem(label="Paste Album")
-        paste_item.connect("activate", self.paste_action)
-        paste_item.show()
-        app_menu.append(paste_item)
+        app_menu = self._menu()
         menu_button = Gtk.MenuButton(visible=True, direction=Gtk.ArrowType.NONE,
                                          popup=app_menu)
         header.pack_end(menu_button)
@@ -70,7 +62,36 @@ class PlayPongo(Gtk.Window):
         up.connect("clicked", self.search_up)
         down.connect("clicked", self.search_down)
         hide.connect("clicked", self.hide_search)
-        
+
+    def _menu(self):
+        app_menu = Gtk.Menu()
+        # Remove this in "files" mode
+        paste_item = Gtk.MenuItem(label="Paste Album")
+        paste_item.connect("activate", self.paste_action)
+        paste_item.show()
+        app_menu.append(paste_item)
+        settings_item = Gtk.MenuItem(label="Settings")
+        settings_item.connect("activate", self.settings_action)
+        settings_item.show()
+        app_menu.append(settings_item)
+        connect_item = Gtk.MenuItem(label="Connect")
+        connect_item.connect("activate", self.connect_action)
+        connect_item.show()
+        app_menu.append(connect_item)
+        albums_item = Gtk.MenuItem(label="Albums")
+        albums_item.connect("activate", self.albums_action)
+        albums_item.show()
+        app_menu.append(albums_item)
+        playlists_item = Gtk.MenuItem(label="Playlists")
+        playlists_item.connect("activate", self.playlists_action)
+        playlists_item.show()
+        app_menu.append(playlists_item)
+        player_item = Gtk.MenuItem(label="Player")
+        player_item.connect("activate", self.player_action)
+        player_item.show()
+        app_menu.append(player_item)
+        return app_menu
+    
     def back_action(self, widget):
         """
         Go back in the WebView history unless the path is /.  In that
@@ -138,6 +159,18 @@ class PlayPongo(Gtk.Window):
         if id:
             self.webview.load_uri(self.base_url + 'spotify/album/%s'%id)
 
+    def connect_action(self, event):
+        pass
+
+    def albums_action(self, event):
+        pass
+
+    def playlists_action(self, event):
+        pass
+
+    def player_action(self, event):
+        pass
+    
     def navigate(self, view, frame, request, action, decision):
         """
         Watch for the redirect address from Spotify authentication.
