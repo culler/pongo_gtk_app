@@ -12,6 +12,10 @@ class PlayPongo(Gtk.Window):
     to localhost:8800, which is the redirect address used by Spotify authentication
     for the Pongo Spotify app.
     """
+    albums_path = 'spotify/albums'
+    playlists_path = 'spotify/playlists'
+    player_path = 'spotify/queue'
+    
     def __init__(self, app, pongo_server):
         super(Gtk.Window, self).__init__()
         self.app, self.pongo_server = app, pongo_server
@@ -160,16 +164,16 @@ class PlayPongo(Gtk.Window):
             self.webview.load_uri(self.base_url + 'spotify/album/%s'%id)
 
     def connect_action(self, event):
-        pass
+        self.app.back_to_finder()
 
     def albums_action(self, event):
-        pass
+        self.webview.load_uri(self.base_url + self.albums_path)
 
     def playlists_action(self, event):
-        pass
+        self.webview.load_uri(self.base_url + self.playlists_path)
 
     def player_action(self, event):
-        pass
+        self.webview.load_uri(self.base_url + self.player_path)
     
     def navigate(self, view, frame, request, action, decision):
         """
