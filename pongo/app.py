@@ -35,8 +35,17 @@ class PongoApplication(Gtk.Application):
             window.set_default_size(462, 768)
             window.move(75, 50)
             window.set_border_width(30)
+            self.box = box = Gtk.Box(Gtk.Orientation.VERTICAL, 10)
             self.finder = finder = FindPongo(self)
-            window.add(finder)
+            box.pack_start(finder, True, True, 0)
+            box.set_orientation(Gtk.Orientation.VERTICAL)
+            label = Gtk.Label("Connect By IP Address/Name:")
+            alignment = Gtk.Alignment()
+            alignment.set(0.0, 1.0, 0.0, 0.0)
+            alignment.add(label)
+            box.pack_end(alignment, False, False, 0)
+            window.add(box)
+            box.show_all()
         self.window.present()
 
     def play_pongo(self, server):
