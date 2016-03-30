@@ -98,9 +98,6 @@ class PlayPongo(Gtk.Window):
         Go back in the WebView history unless the path is /.  In that
         case, open the finder.
         """
-#        print self.webview.get_uri()
-#        parts = urlparse(self.webview.get_uri())
-#        if not parts.path or parts.path == "/":
         if not self.webview.can_go_back():
             self.app.back_to_finder()
         else:
