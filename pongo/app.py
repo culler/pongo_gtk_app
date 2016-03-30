@@ -32,7 +32,7 @@ class PongoApplication(Gtk.Application):
                                                 title="Pongo")
             window.connect("destroy", self.quit_app)
             window.set_name("finderWindow")
-            window.set_default_size(462, 768)
+            window.set_default_size(462, 738)
             window.move(75, 50)
             window.set_border_width(30)
             self.box = box = Gtk.Box(Gtk.Orientation.VERTICAL, 10)
@@ -50,7 +50,7 @@ class PongoApplication(Gtk.Application):
 
     def play_pongo(self, server):
         self.player = player = PlayPongo(self, server)
-        player.move(75, 75)
+        player.move(75, 50)
         player.show_all()
         self.window.iconify()
 
