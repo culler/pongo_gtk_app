@@ -67,6 +67,9 @@ class FindPongo(Gtk.Grid):
         self.app = app
         self.server_list = server_list = app.servers
         self.listbox = listbox = Gtk.ListBox()
+        listbox.props.hexpand = True
+        listbox.props.halign = Gtk.Align.FILL | Gtk.Align.START
+        listbox.props.margin_start = 50
         listbox.set_selection_mode(Gtk.SelectionMode.NONE)
         listbox.connect('row_activated', self.server_select)
         def sort_function(row1, row2, data, notify_destroy):
@@ -74,7 +77,10 @@ class FindPongo(Gtk.Grid):
         listbox.set_sort_func(sort_function, None, False)
         for server in server_list:
             listbox.add(PongoServerRow(server))
-        self.attach(Gtk.Label("Select a local Pongo:"), 0, 0, 1, 1)
+        label = Gtk.Label("Local Pongos:")
+        label.props.hexpand = True
+        label.props.halign = Gtk.Align.FILL | Gtk.Align.START
+        self.attach(label, 0, 0, 1, 1)
         self.attach(listbox, 0, 1, 1, 1)
         zeroconf = Zeroconf()
         listener = PongoListener(self)
