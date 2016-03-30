@@ -56,7 +56,6 @@ class PlayPongo(Gtk.Window):
         self.webview.load_uri(base_url)
         self.search_box = search_box = Gtk.Box()
         self.search_entry = search = Gtk.Entry(text='Search')
-        search.set_width_chars(40)
         up = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_UP))
         down = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_DOWN))
         search_box.pack_end(down, False, False, 0)
@@ -99,8 +98,10 @@ class PlayPongo(Gtk.Window):
         Go back in the WebView history unless the path is /.  In that
         case, open the finder.
         """
-        parts = urlparse(self.webview.get_uri())
-        if not parts.path or parts.path == "/":
+#        print self.webview.get_uri()
+#        parts = urlparse(self.webview.get_uri())
+#        if not parts.path or parts.path == "/":
+        if not self.webview.can_go_back():
             self.app.back_to_finder()
         else:
             self.webview.go_back()
