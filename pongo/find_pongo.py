@@ -66,7 +66,7 @@ class FindPongo(Gtk.Grid):
         self.props.row_spacing = 10
         self.app = app
         self.server_list = server_list = app.servers
-        label = Gtk.Label("Pongos On Your Network:")
+        label = Gtk.Label("Local Pongos:")
         label.props.hexpand = True
         label.props.halign = Gtk.Align.FILL | Gtk.Align.START
         self.attach(label, 0, 0, 1, 1)

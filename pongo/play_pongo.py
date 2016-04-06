@@ -13,6 +13,7 @@ class PlayPongo(Gtk.Window):
     for the Pongo Spotify app.
     """
     spotify_albums_path = 'spotify/albums'
+    spotify_paste_path = 'spotify/path'
     spotify_playlists_path = 'spotify/playlists'
     spotify_player_path = 'spotify/queue'
     settings_path = 'pongo/settings'
@@ -166,7 +167,8 @@ class PlayPongo(Gtk.Window):
             if path.startswith('/album'):
                 id = path.split('/')[-1]
         if id:
-            self.webview.load_uri(self.base_url + 'spotify/album/%s'%id)
+            self.webview.load_uri(self.base_url + '%s/%s'%(
+                spotify_paste_path, id))
 
     def connect_action(self, event):
         self.app.back_to_finder()

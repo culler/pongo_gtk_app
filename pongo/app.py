@@ -1,4 +1,4 @@
-import sys, signal
+import sys, signal, socket
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('WebKit', '3.0')
@@ -35,19 +35,39 @@ class PongoApplication(Gtk.Application):
             window.set_default_size(462, 738)
             window.move(75, 50)
             window.set_border_width(30)
-            self.box = box = Gtk.Box(Gtk.Orientation.VERTICAL, 10)
+            box = Gtk.Box(Gtk.Orientation.VERTICAL, 10)
+            box.set_homogeneous(False)
             self.finder = finder = FindPongo(self)
             box.pack_start(finder, True, True, 0)
             box.set_orientation(Gtk.Orientation.VERTICAL)
-            label = Gtk.Label("Connect By IP Address/Name:")
-            alignment = Gtk.Alignment()
-            alignment.set(0.0, 1.0, 0.0, 0.0)
-            alignment.add(label)
-            box.pack_end(alignment, False, False, 0)
+            gobox = Gtk.Box(Gtk.Orientation.HORIZONTAL, 10)
+            gobox.set_homogeneous(False)
+            self.IPentry = IPentry = Gtk.Entry()
+            go = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_FORWARD))
+            go.connect('clicked', self.ip_connect)
+            gobox.pack_end(go, False, False, 0)
+            gobox.pack_end(IPentry, True, True, 0)
+            box.pack_end(gobox, False, False, 0)
+            label = Gtk.Label("IP Address/Name:")
+            label.props.halign=Gtk.Align.START
+            box.pack_end(label, False, False, 0)
             window.add(box)
             box.show_all()
         self.window.present()
 
+    def ip_connect(self, event):
+        data = self.IPentry.get_text()
+        try:
+            longs, shorts, addrs = socket.gethostbyaddr(data)
+            if not shorts:
+                name = longs.split('.')[0]
+            else:
+                name = shorts[0]
+            server = PongoServer(name=name, ip_address=addrs[0]+':8880')
+            self.play_pongo(server)
+        except (socket.herror, IndexError):
+            self.IPentry.set_text('unknown')
+        
     def play_pongo(self, server):
         self.player = player = PlayPongo(self, server)
         player.move(75, 50)
