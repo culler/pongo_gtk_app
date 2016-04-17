@@ -97,24 +97,83 @@ class PlayPongo(Gtk.Window):
         search_box.pack_end(search, True, True, 0)
         up.connect("clicked", self.search_up)
         down.connect("clicked", self.search_down)
+        self.albums_url = self.base_url + self.albums_path
+        self.album_item_url = None
+        self.playlists_url = self.base_url + self.playlists_path
+        self.playlist_item_url = None
+        self.player_url = self.base_url + self.player_path
+
+    def navigate(self, view, frame, request, action, decision):
+        """
+        Controls navigation through the Pongo pages.
+        """
+        url = request.get_uri()
+        parts = urlparse(url)
+        if parts.hostname == 'localhost' and parts.port == 8880:
+            # Handle Spotify authentication redirects
+            decision.ignore()
+            for cookie in self.cookiejar.all_cookies():
+                self.cookiejar.delete_cookie(cookie)
+            query_info = parse_qs(parts.query)
+            return_page = query_info['state'][0]
+            auth_code = query_info['code'][0]
+            url = 'http://%s/spotify_auth/?page=%s;code=%s'%(
+                self.pongo_server.ip_address,
+                return_page,
+                auth_code)
+            self.webview.load_uri(url)
+            return False
+        # App navigation:
+        # We remember the state (list or detail) of the Albums and Playlist tabs.
+        # To navigate up from the detail view to the list view, use the back
+        # button. 
+        decision.use()
+        segments = parts.path.split('/')
+        if len(segments) > 0:
+            head = segments[1]
+            if head == 'album':
+                self.album_item_url = url
+            elif head == 'playlist':
+                self.playlist_item_url = url
+        return True
 
     def tab_action(self, index):
         if index == 0:
-            self.webview.load_uri(self.base_url + self.playlists_path)
+            if self.playlist_item_url:
+                target = self.playlist_item_url
+            else:
+                target = self.playlists_url
         elif index == 1:
-            self.webview.load_uri(self.base_url + self.albums_path)
+            if self.album_item_url:
+                target = self.album_item_url
+            else:
+                target = self.albums_url
         elif index == 2:
-            self.webview.load_uri(self.base_url + self.player_path)
+            target = self.player_url
+        self.webview.load_uri(target)
+
+    def go_up(self):
+        url = self.webview.get_uri();
+        parts = urlparse(url)
+        segments = parts.path.split('/')
+        if (len(segments) > 1):
+            head = segments[1]
+            if head == "album":
+                self.album_item_url = None
+                self.webview.load_uri(self.albums_url)
+                return True;
+            elif head == "playlist":
+                self.playlist_iem_url = None
+                self.webview.load_uri(self.playlists_url)
+                return True
+        return False;
         
     def back_action(self, widget):
         """
-        Go back in the WebView history unless the path is /.  In that
-        case, open the finder.
+        Go up one level.
         """
-        if not self.webview.can_go_back():
+        if not self.go_up():
             self.app.back_to_finder()
-        else:
-            self.webview.go_back()
 
     def toggle_search(self, widget):
         """
@@ -175,33 +234,6 @@ class PlayPongo(Gtk.Window):
         if id:
             self.webview.load_uri(self.base_url + '%s/%s'%(
                 self.spotify_paste_path, id))
-
-    def connect_action(self, event):
-        self.app.back_to_finder()
-    
-    def navigate(self, view, frame, request, action, decision):
-        """
-        Watch for the redirect address from Spotify authentication.
-        When found redirect the redirect to the spotify_auth view on
-        the Pongo server.
-        """
-        parts = urlparse(request.get_uri())
-        if parts.hostname != 'localhost' or parts.port != 8880:
-            decision.use()
-            return True
-        else:
-            decision.ignore()
-            for cookie in self.cookiejar.all_cookies():
-                self.cookiejar.delete_cookie(cookie)
-            query_info = parse_qs(parts.query)
-            return_page = query_info['state'][0]
-            auth_code = query_info['code'][0]
-            uri = 'http://%s/spotify_auth/?page=%s;code=%s'%(
-                self.pongo_server.ip_address,
-                return_page,
-                auth_code)
-            self.webview.load_uri(uri)
-            return False
 
     def load_error(self, view, frame, uri, error):
         """
