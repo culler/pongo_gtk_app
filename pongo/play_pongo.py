@@ -1,10 +1,16 @@
 from gi.repository import Gtk, Gdk, WebKit, Soup
 from urlparse import urlparse, parse_qs
 from . import PongoServer
+import re
 
 """
 Implementation of the PlayPongo activity.
 """
+spotify = 'https://open.spotify.com'
+album_uri = re.compile('spotify:album:([A-z0-9/\+-_]{22})')
+album_link = re.compile(spotify + '/album/([A-z0-9/\+-_]{22})')
+playlist_uri = re.compile('spotify:user:[^:]*:playlist:([A-z0-9/\+-_]{22})')
+playlist_link = re.compile(spotify + '/user/[^:]*/playlist/([A-z0-9/\+-_]{22})')
 
 class TabBar(Gtk.Box):
     def __init__(self, tabnames, initial, action):
@@ -41,7 +47,10 @@ class PlayPongo(Gtk.Window):
     for the Pongo Spotify app.
     """
     albums_path = 'albums'
-    paste_path = 'spotify/album/paste'
+    album_path = 'album/'
+    album_paste_path = 'spotify/album/paste'
+    playlist_paste_path = 'spotify/playlist/paste'
+    playlist_path = 'playlist/'
     playlists_path = 'playlists'
     player_path = 'player'
     settings_path = 'pongo/settings'
@@ -98,8 +107,12 @@ class PlayPongo(Gtk.Window):
         up.connect("clicked", self.search_up)
         down.connect("clicked", self.search_down)
         self.albums_url = self.base_url + self.albums_path
+        self.album_url = self.base_url + self.album_path
+        self.album_paste_url = self.base_url + self.album_paste_path
         self.album_item_url = None
         self.playlists_url = self.base_url + self.playlists_path
+        self.playlist_url = self.base_url + self.playlist_path
+        self.playlist_paste_url = self.base_url + self.playlist_paste_path
         self.playlist_item_url = None
         self.player_url = self.base_url + self.player_path
 
@@ -225,15 +238,42 @@ class PlayPongo(Gtk.Window):
     def paste_action(self, event):
         id = None
         uri = self.clipboard.wait_for_text()
-        if uri.startswith('spotify:album:'):
-            id = uri.split(':')[2]
-        elif uri.startswith('http'):
-            path = urlparse(uri).path
-            if path.startswith('/album'):
-                id = path.split('/')[-1]
-        if id:
-            self.webview.load_uri(self.base_url + '%s/%s'%(
-                self.spotify_paste_path, id))
+        if id is None:
+            match = album_uri.match(uri)
+            if match:
+                id = match.group(1)
+                uri_type = 'album'
+        elif id is None:
+            match = album_link.match(uri)
+            if match:
+                id = match.group(1)
+                uri_type = 'album'
+        elif id is None:
+            match = playlist_uri.match(uri)
+            if match:
+                id = match.group(1)
+                uri_type = 'playlist'
+        elif id is None:
+            match = playlist_link.match(uri)
+            if match:
+                id = match.group(1)
+                uri_type = 'playlist'
+        if id is not None and uri_type == 'album':
+            url = self.album_paste_path + id
+            self.album_item_url = self.album_path + id
+            self.webview.load_uri(url)
+        elif id is not None and uri_type == 'playlist':
+            url = self.album_paste_path + id
+            album_url = self.album_path + id
+            self.webview.load_uri(url)
+        else:
+            dialog = Gtk.MessageDialog(
+                self, 0, Gtk.MessageType.INFO,
+                Gtk.ButtonsType.OK,
+                "The clipboard did not contain a valid Spotify link.")
+            dialog.run()
+            dialog.destroy()
+            
 
     def load_error(self, view, frame, uri, error):
         """
