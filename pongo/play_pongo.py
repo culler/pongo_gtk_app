@@ -6,16 +6,44 @@ from . import PongoServer
 Implementation of the PlayPongo activity.
 """
 
+class TabBar(Gtk.Box):
+    def __init__(self, tabnames, initial, action):
+        Gtk.Box.__init__(self, orientation=Gtk.Orientation.HORIZONTAL)
+        self.action = action
+        self.tabs = []
+        for name in tabnames:
+            button = Gtk.ToggleButton(name)
+            button.connect("toggled", self._handle_click, len(self.tabs))
+            self.tabs.append(button)
+            self.pack_start(button, True, True, 0)
+        self.ignore = True
+        self.active_tab = initial
+        self.tabs[initial].set_active(True)
+            
+    def _handle_click(self, button, index):
+        if self.ignore:
+            self.ignore = False
+            return
+        if index == self.active_tab:
+            self.ignore = True
+            button.set_active(True)
+        else:
+            old_active = self.tabs[self.active_tab]
+            self.active_tab = index
+            self.ignore = True
+            old_active.set_active(False)
+        self.action(index)
+                             
 class PlayPongo(Gtk.Window):
     """
     A WebView window connected to a Pongo server.  This WebView traps connections
     to localhost:8800, which is the redirect address used by Spotify authentication
     for the Pongo Spotify app.
     """
-    spotify_albums_path = 'spotify/albums'
-    spotify_paste_path = 'spotify/path'
-    spotify_playlists_path = 'spotify/playlists'
-    spotify_player_path = 'spotify/queue'
+    albums_path = 'albums'
+    paste_path = 'spotify/album/paste'
+    playlists_path = 'playlists'
+    player_path = 'player'
     settings_path = 'pongo/settings'
     
     def __init__(self, app, pongo_server):
@@ -52,20 +80,7 @@ class PlayPongo(Gtk.Window):
         webview.connect("load-error", self.load_error)
         self.cookiejar = WebKit.get_default_session().get_feature(Soup.CookieJar)
         scroller.add(webview)
-        tab_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        playlist_button = Gtk.ToggleButton("Playlists")
-        playlist_button.connect("toggled", self.select_page, 0)
-        tab_bar.pack_start(playlist_button, True, True, 0)
-        album_button = Gtk.ToggleButton("Albums")
-        album_button.connect("toggled", self.select_page, 1)
-        tab_bar.pack_start(album_button, True, True, 0)
-        player_button = Gtk.ToggleButton("Player")
-        player_button.connect("toggled", self.select_page, 2)
-        tab_bar.pack_start(player_button, True, True, 0)
-        self.tabs = [playlist_button, album_button, player_button]
-        self.active_tab = 1
-        self.ignore_toggle = False
-        album_button.set_active(True)
+        tab_bar = TabBar(['Playlists', 'Albums', 'Player'], 1, self.tab_action)
         self.box = box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(box)
         box.pack_end(scroller, True, True, 0)
@@ -83,20 +98,14 @@ class PlayPongo(Gtk.Window):
         up.connect("clicked", self.search_up)
         down.connect("clicked", self.search_down)
 
-    def select_page(self, button, index):
-        if self.ignore_toggle:
-            self.ignore_toggle = False
-            print 'ignoring'
-            return
-        if index == self.active_tab:
-            button.set_active(True)
-            print 'pushed %d, active %d'%(index, self.active_tab)
-            self.ignore_toggle = True
-        else:
-            self.tabs[self.active_tab].set_active(False)
-            self.active_tab = index
-            print 'pushed %d, active %d'%(index, self.active_tab)
-
+    def tab_action(self, index):
+        if index == 0:
+            self.webview.load_uri(self.base_url + self.playlists_path)
+        elif index == 1:
+            self.webview.load_uri(self.base_url + self.albums_path)
+        elif index == 2:
+            self.webview.load_uri(self.base_url + self.player_path)
+        
     def back_action(self, widget):
         """
         Go back in the WebView history unless the path is /.  In that
@@ -165,19 +174,10 @@ class PlayPongo(Gtk.Window):
                 id = path.split('/')[-1]
         if id:
             self.webview.load_uri(self.base_url + '%s/%s'%(
-                spotify_paste_path, id))
+                self.spotify_paste_path, id))
 
     def connect_action(self, event):
         self.app.back_to_finder()
-
-    def albums_action(self, event):
-        self.webview.load_uri(self.base_url + self.spotify_albums_path)
-
-    def playlists_action(self, event):
-        self.webview.load_uri(self.base_url + self.spotify_playlists_path)
-
-    def player_action(self, event):
-        self.webview.load_uri(self.base_url + self.spotify_player_path)
     
     def navigate(self, view, frame, request, action, decision):
         """
