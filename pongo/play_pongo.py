@@ -29,17 +29,20 @@ class PlayPongo(Gtk.Window):
         # Black corners on header bar caused by Bug #1437814
         header.set_show_close_button(True)
         header.props.title = pongo_server.name
-        back_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_BACK))
+        back_button = Gtk.Button.new_from_icon_name("go-previous",
+                                                    Gtk.IconSize.SMALL_TOOLBAR)
         back_button.connect("clicked", self.back_action)
         header.pack_start(back_button)
-        app_menu = self._menu()
-        menu_button = Gtk.MenuButton(visible=True, direction=Gtk.ArrowType.NONE,
-                                         popup=app_menu)
-        header.pack_end(menu_button)
-        reload_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_REFRESH))
-        reload_button.connect("clicked", self.reload_action)
-        header.pack_end(reload_button)
-        search_button = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_FIND))
+        settings_button = Gtk.Button.new_from_icon_name("preferences-system",
+                                                        Gtk.IconSize.SMALL_TOOLBAR)
+        settings_button.connect("clicked", self.settings_action)
+        header.pack_end(settings_button)
+        paste_button = Gtk.Button.new_from_icon_name("edit-paste",
+                                                     Gtk.IconSize.SMALL_TOOLBAR)
+        paste_button.connect("clicked", self.paste_action)
+        header.pack_end(paste_button)
+        search_button = Gtk.Button.new_from_icon_name("edit-find",
+                                                      Gtk.IconSize.SMALL_TOOLBAR)
         search_button.connect("clicked", self.toggle_search)
         header.pack_end(search_button)
         self.set_titlebar(header)
@@ -49,9 +52,24 @@ class PlayPongo(Gtk.Window):
         webview.connect("load-error", self.load_error)
         self.cookiejar = WebKit.get_default_session().get_feature(Soup.CookieJar)
         scroller.add(webview)
+        tab_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        playlist_button = Gtk.ToggleButton("Playlists")
+        playlist_button.connect("toggled", self.select_page, 0)
+        tab_bar.pack_start(playlist_button, True, True, 0)
+        album_button = Gtk.ToggleButton("Albums")
+        album_button.connect("toggled", self.select_page, 1)
+        tab_bar.pack_start(album_button, True, True, 0)
+        player_button = Gtk.ToggleButton("Player")
+        player_button.connect("toggled", self.select_page, 2)
+        tab_bar.pack_start(player_button, True, True, 0)
+        self.tabs = [playlist_button, album_button, player_button]
+        self.active_tab = 1
+        self.ignore_toggle = False
+        album_button.set_active(True)
         self.box = box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(box)
         box.pack_end(scroller, True, True, 0)
+        box.pack_end(tab_bar, False, False, 0)
         self.show_all()
         self.base_url = base_url = 'http://%s/'%self.pongo_server.ip_address
         self.webview.load_uri(base_url)
@@ -65,35 +83,20 @@ class PlayPongo(Gtk.Window):
         up.connect("clicked", self.search_up)
         down.connect("clicked", self.search_down)
 
-    def _menu(self):
-        app_menu = Gtk.Menu()
-        # Remove this in "files" mode
-        paste_item = Gtk.MenuItem(label="Paste Album")
-        paste_item.connect("activate", self.paste_action)
-        paste_item.show()
-        app_menu.append(paste_item)
-        settings_item = Gtk.MenuItem(label="Settings")
-        settings_item.connect("activate", self.settings_action)
-        settings_item.show()
-        app_menu.append(settings_item)
-        connect_item = Gtk.MenuItem(label="Connect")
-        connect_item.connect("activate", self.connect_action)
-        connect_item.show()
-        app_menu.append(connect_item)
-        albums_item = Gtk.MenuItem(label="Albums")
-        albums_item.connect("activate", self.albums_action)
-        albums_item.show()
-        app_menu.append(albums_item)
-        playlists_item = Gtk.MenuItem(label="Playlists")
-        playlists_item.connect("activate", self.playlists_action)
-        playlists_item.show()
-        app_menu.append(playlists_item)
-        player_item = Gtk.MenuItem(label="Player")
-        player_item.connect("activate", self.player_action)
-        player_item.show()
-        app_menu.append(player_item)
-        return app_menu
-    
+    def select_page(self, button, index):
+        if self.ignore_toggle:
+            self.ignore_toggle = False
+            print 'ignoring'
+            return
+        if index == self.active_tab:
+            button.set_active(True)
+            print 'pushed %d, active %d'%(index, self.active_tab)
+            self.ignore_toggle = True
+        else:
+            self.tabs[self.active_tab].set_active(False)
+            self.active_tab = index
+            print 'pushed %d, active %d'%(index, self.active_tab)
+
     def back_action(self, widget):
         """
         Go back in the WebView history unless the path is /.  In that
@@ -103,12 +106,6 @@ class PlayPongo(Gtk.Window):
             self.app.back_to_finder()
         else:
             self.webview.go_back()
-
-    def reload_action(self, widget):
-        """
-        Reload the current page.
-        """
-        self.webview.reload_bypass_cache()
 
     def toggle_search(self, widget):
         """
