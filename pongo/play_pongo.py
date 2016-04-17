@@ -48,8 +48,8 @@ class PlayPongo(Gtk.Window):
     """
     albums_path = 'albums'
     album_path = 'album/'
-    album_paste_path = 'spotify/album/paste'
-    playlist_paste_path = 'spotify/playlist/paste'
+    album_paste_path = 'spotify/album/paste/'
+    playlist_paste_path = 'spotify/playlist/paste/'
     playlist_path = 'playlist/'
     playlists_path = 'playlists'
     player_path = 'player'
@@ -259,13 +259,11 @@ class PlayPongo(Gtk.Window):
                 id = match.group(1)
                 uri_type = 'playlist'
         if id is not None and uri_type == 'album':
-            url = self.album_paste_path + id
-            self.album_item_url = self.album_path + id
-            self.webview.load_uri(url)
+            self.album_item_url = self.album_url + id
+            self.webview.load_uri(self.album_paste_url + id)
         elif id is not None and uri_type == 'playlist':
-            url = self.album_paste_path + id
-            album_url = self.album_path + id
-            self.webview.load_uri(url)
+            self.playlist_url = self.playlist_url + id
+            self.webview.load_uri(self.playlist_paste_url + id)
         else:
             dialog = Gtk.MessageDialog(
                 self, 0, Gtk.MessageType.INFO,
