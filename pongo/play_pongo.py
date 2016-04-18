@@ -48,8 +48,8 @@ class PlayPongo(Gtk.Window):
     """
     albums_path = 'albums'
     album_path = 'album/'
-    album_paste_path = 'spotify/album/paste/'
-    playlist_paste_path = 'spotify/playlist/paste/'
+    album_paste_path = 'album/paste/'
+    playlist_paste_path = 'playlist/paste/'
     playlist_path = 'playlist/'
     playlists_path = 'playlists'
     player_path = 'player'
