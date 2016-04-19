@@ -171,6 +171,8 @@ class PlayPongo(Gtk.Window):
         segments = parts.path.split('/')
         if (len(segments) > 1):
             head = segments[1]
+            if head == "spotify":
+                head = segments[2]
             if head == "album":
                 self.album_item_url = None
                 self.webview.load_uri(self.albums_url)
@@ -205,6 +207,8 @@ class PlayPongo(Gtk.Window):
             self.box.pack_start(self.search_box, False, False, 0)
             self.search_showing = True
             self.show_all()
+            self.search_entry.grab_focus()
+            self.search_entry.select_region(0, -1);
             
     def hide_search(self, widget):
         """
@@ -262,7 +266,7 @@ class PlayPongo(Gtk.Window):
             self.album_item_url = self.album_url + id
             self.webview.load_uri(self.album_paste_url + id)
         elif id is not None and uri_type == 'playlist':
-            self.playlist_url = self.playlist_url + id
+            self.playlist_item_url = self.playlist_url + id
             self.webview.load_uri(self.playlist_paste_url + id)
         else:
             dialog = Gtk.MessageDialog(
