@@ -98,6 +98,7 @@ class PlayPongo(Gtk.Window):
         self.base_url = base_url = 'http://%s/'%self.pongo_server.ip_address
         self.search_box = search_box = Gtk.Box()
         self.search_entry = search = Gtk.Entry(text='Search')
+        search.connect("key-release-event", self.key_action)
         up = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_UP))
         down = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_DOWN))
         search_box.pack_end(down, False, False, 0)
@@ -232,6 +233,10 @@ class PlayPongo(Gtk.Window):
     def search_down(self, widget):
         self.webview.search_text(self.search_entry.get_text(),
                                  False, True, True)
+        
+    def key_action(self, widget, event, data=None):
+        if event.keyval == Gdk.KEY_Return:
+            self.search_down(widget)
         
     def settings_action(self, widget):
         """
