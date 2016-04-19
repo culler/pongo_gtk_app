@@ -96,7 +96,6 @@ class PlayPongo(Gtk.Window):
         box.pack_end(tab_bar, False, False, 0)
         self.show_all()
         self.base_url = base_url = 'http://%s/'%self.pongo_server.ip_address
-        self.webview.load_uri(base_url)
         self.search_box = search_box = Gtk.Box()
         self.search_entry = search = Gtk.Entry(text='Search')
         up = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_UP))
@@ -115,6 +114,7 @@ class PlayPongo(Gtk.Window):
         self.playlist_paste_url = self.base_url + self.playlist_paste_path
         self.playlist_item_url = None
         self.player_url = self.base_url + self.player_path
+        self.webview.load_uri(self.albums_url)
 
     def navigate(self, view, frame, request, action, decision):
         """
