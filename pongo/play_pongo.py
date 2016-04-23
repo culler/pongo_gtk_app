@@ -11,34 +11,6 @@ album_uri = re.compile('spotify:album:([A-z0-9/\+-_]{22})')
 album_link = re.compile(spotify + '/album/([A-z0-9/\+-_]{22})')
 playlist_uri = re.compile('spotify:user:[^:]*:playlist:([A-z0-9/\+-_]{22})')
 playlist_link = re.compile(spotify + '/user/[^:]*/playlist/([A-z0-9/\+-_]{22})')
-
-class TabBar(Gtk.Box):
-    def __init__(self, tabnames, initial, action):
-        Gtk.Box.__init__(self, orientation=Gtk.Orientation.HORIZONTAL)
-        self.action = action
-        self.tabs = []
-        for name in tabnames:
-            button = Gtk.ToggleButton(name)
-            button.connect("toggled", self._handle_click, len(self.tabs))
-            self.tabs.append(button)
-            self.pack_start(button, True, True, 0)
-        self.ignore = True
-        self.active_tab = initial
-        self.tabs[initial].set_active(True)
-            
-    def _handle_click(self, button, index):
-        if self.ignore:
-            self.ignore = False
-            return
-        if index == self.active_tab:
-            self.ignore = True
-            button.set_active(True)
-        else:
-            old_active = self.tabs[self.active_tab]
-            self.active_tab = index
-            self.ignore = True
-            old_active.set_active(False)
-        self.action(index)
                              
 class PlayPongo(Gtk.Window):
     """
@@ -89,11 +61,9 @@ class PlayPongo(Gtk.Window):
         webview.connect("load-error", self.load_error)
         self.cookiejar = WebKit.get_default_session().get_feature(Soup.CookieJar)
         scroller.add(webview)
-        tab_bar = TabBar(['Playlists', 'Albums', 'Player'], 1, self.tab_action)
         self.box = box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(box)
         box.pack_end(scroller, True, True, 0)
-        box.pack_end(tab_bar, False, False, 0)
         self.show_all()
         self.base_url = base_url = 'http://%s/'%self.pongo_server.ip_address
         self.search_box = search_box = Gtk.Box()
@@ -150,21 +120,6 @@ class PlayPongo(Gtk.Window):
             elif head == 'playlist':
                 self.playlist_item_url = url
         return True
-
-    def tab_action(self, index):
-        if index == 0:
-            if self.playlist_item_url:
-                target = self.playlist_item_url
-            else:
-                target = self.playlists_url
-        elif index == 1:
-            if self.album_item_url:
-                target = self.album_item_url
-            else:
-                target = self.albums_url
-        elif index == 2:
-            target = self.player_url
-        self.webview.load_uri(target)
 
     def go_up(self):
         url = self.webview.get_uri();
