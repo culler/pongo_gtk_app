@@ -16,7 +16,8 @@ class PlayPongo(Gtk.Window):
     """
     A WebView window connected to a Pongo server.  This WebView traps connections
     to localhost:8800, which is the redirect address used by Spotify authentication
-    for the Pongo Spotify app.
+    for the Pongo Spotify app, as well as urls with path of the form /pongo/*, which
+    are consumed as commands to the app itself.
     """
     albums_path = 'albums'
     album_path = 'album/'
@@ -25,36 +26,14 @@ class PlayPongo(Gtk.Window):
     playlist_path = 'playlist/'
     playlists_path = 'playlists'
     player_path = 'player'
-    settings_path = 'pongo/settings'
     
     def __init__(self, app, pongo_server):
-        super(Gtk.Window, self).__init__()
+        super(Gtk.Window, self).__init__(title='Pongo')
         self.app, self.pongo_server = app, pongo_server
         self.set_default_size(432, 768)
         self.search_showing = False
         self.connect("destroy", app.player_destroyed)
         self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-        self.header = header = Gtk.HeaderBar()
-        # Black corners on header bar caused by Bug #1437814
-        header.set_show_close_button(True)
-        header.props.title = pongo_server.name
-        back_button = Gtk.Button.new_from_icon_name("go-previous",
-                                                    Gtk.IconSize.SMALL_TOOLBAR)
-        back_button.connect("clicked", self.back_action)
-        header.pack_start(back_button)
-        settings_button = Gtk.Button.new_from_icon_name("preferences-system",
-                                                        Gtk.IconSize.SMALL_TOOLBAR)
-        settings_button.connect("clicked", self.settings_action)
-        header.pack_end(settings_button)
-        paste_button = Gtk.Button.new_from_icon_name("edit-paste",
-                                                     Gtk.IconSize.SMALL_TOOLBAR)
-        paste_button.connect("clicked", self.paste_action)
-        header.pack_end(paste_button)
-        search_button = Gtk.Button.new_from_icon_name("edit-find",
-                                                      Gtk.IconSize.SMALL_TOOLBAR)
-        search_button.connect("clicked", self.toggle_search)
-        header.pack_end(search_button)
-        self.set_titlebar(header)
         self.scroller = scroller = Gtk.ScrolledWindow()
         self.webview = webview = WebKit.WebView()
         webview.connect("navigation-policy-decision-requested", self.navigate)
@@ -93,11 +72,11 @@ class PlayPongo(Gtk.Window):
         """
         url = request.get_uri()
         parts = urlparse(url)
+        # Handle Spotify authentication redirects
         if parts.hostname == 'localhost' and parts.port == 8880:
-            # Handle Spotify authentication redirects
-            decision.ignore()
             for cookie in self.cookiejar.all_cookies():
-                self.cookiejar.delete_cookie(cookie)
+                if cookie.get_domain().endswith('spotify.com'):
+                    self.cookiejar.delete_cookie(cookie)
             query_info = parse_qs(parts.query)
             return_page = query_info['state'][0]
             auth_code = query_info['code'][0]
@@ -106,56 +85,35 @@ class PlayPongo(Gtk.Window):
                 return_page,
                 auth_code)
             self.webview.load_uri(url)
+            decision.ignore()
             return False
-        # App navigation:
-        # We remember the state (list or detail) of the Albums and Playlist tabs.
-        # To navigate up from the detail view to the list view, use the back
-        # button. 
+        # Handle app commands
+        path = parts.path
+        if path.startswith('/pongo/'):
+            command = path.split('/')[-1]
+            if command == 'paste_link':
+                url = self.get_paste_url()
+                if url:
+                    self.webview.load_uri(url)
+            elif command == 'connect':
+                self.app.back_to_finder()
+            elif command == 'search':
+                self.toggle_search()
+            decision.ignore()
+            return False
         decision.use()
-        segments = parts.path.split('/')
-        if len(segments) > 0:
-            head = segments[1]
-            if head == 'album':
-                self.album_item_url = url
-            elif head == 'playlist':
-                self.playlist_item_url = url
         return True
 
-    def go_up(self):
-        url = self.webview.get_uri();
-        parts = urlparse(url)
-        segments = parts.path.split('/')
-        if (len(segments) > 1):
-            head = segments[1]
-            if head == "spotify":
-                head = segments[2]
-            if head == "album":
-                self.album_item_url = None
-                self.webview.load_uri(self.albums_url)
-                return True;
-            elif head == "playlist":
-                self.playlist_iem_url = None
-                self.webview.load_uri(self.playlists_url)
-                return True
-        return False;
-        
-    def back_action(self, widget):
-        """
-        Go up one level.
-        """
-        if not self.go_up():
-            self.app.back_to_finder()
-
-    def toggle_search(self, widget):
+    def toggle_search(self):
         """
         Toggle the visibility of the search box.
         """
         if self.search_showing:
-            self.hide_search(widget)
+            self.hide_search()
         else:
-            self.show_search(widget)
+            self.show_search()
             
-    def show_search(self, widget):
+    def show_search(self):
         """
         Expose the search box.
         """
@@ -166,7 +124,7 @@ class PlayPongo(Gtk.Window):
             self.search_entry.grab_focus()
             self.search_entry.select_region(0, -1);
             
-    def hide_search(self, widget):
+    def hide_search(self):
         """
         Hide the search box.
         """
@@ -192,14 +150,8 @@ class PlayPongo(Gtk.Window):
     def key_action(self, widget, event, data=None):
         if event.keyval == Gdk.KEY_Return:
             self.search_down(widget)
-        
-    def settings_action(self, widget):
-        """
-        Load the settings page.
-        """
-        self.webview.load_uri(self.base_url + self.settings_path)
-
-    def paste_action(self, event):
+            
+    def get_paste_url(self):
         id = None
         uri = self.clipboard.wait_for_text()
         if id is None:
@@ -224,10 +176,10 @@ class PlayPongo(Gtk.Window):
                 uri_type = 'playlist'
         if id is not None and uri_type == 'album':
             self.album_item_url = self.album_url + id
-            self.webview.load_uri(self.album_paste_url + id)
+            return self.album_paste_url + id
         elif id is not None and uri_type == 'playlist':
             self.playlist_item_url = self.playlist_url + id
-            self.webview.load_uri(self.playlist_paste_url + id)
+            return self.playlist_paste_url + id
         else:
             dialog = Gtk.MessageDialog(
                 self, 0, Gtk.MessageType.INFO,
