@@ -19,13 +19,8 @@ class PlayPongo(Gtk.Window):
     for the Pongo Spotify app, as well as urls with path of the form /pongo/*, which
     are consumed as commands to the app itself.
     """
-    albums_path = 'albums'
-    album_path = 'album/'
     album_paste_path = 'album/paste/'
     playlist_paste_path = 'playlist/paste/'
-    playlist_path = 'playlist/'
-    playlists_path = 'playlists'
-    player_path = 'player'
     
     def __init__(self, app, pongo_server):
         super(Gtk.Window, self).__init__(title='Pongo')
@@ -55,16 +50,9 @@ class PlayPongo(Gtk.Window):
         search_box.pack_end(search, True, True, 0)
         up.connect("clicked", self.search_up)
         down.connect("clicked", self.search_down)
-        self.albums_url = self.base_url + self.albums_path
-        self.album_url = self.base_url + self.album_path
         self.album_paste_url = self.base_url + self.album_paste_path
-        self.album_item_url = None
-        self.playlists_url = self.base_url + self.playlists_path
-        self.playlist_url = self.base_url + self.playlist_path
         self.playlist_paste_url = self.base_url + self.playlist_paste_path
-        self.playlist_item_url = None
-        self.player_url = self.base_url + self.player_path
-        self.webview.load_uri(self.albums_url)
+        self.webview.load_uri(self.base_url + 'albums')
 
     def navigate(self, view, frame, request, action, decision):
         """
@@ -175,10 +163,8 @@ class PlayPongo(Gtk.Window):
                 id = match.group(1)
                 uri_type = 'playlist'
         if id is not None and uri_type == 'album':
-            self.album_item_url = self.album_url + id
             return self.album_paste_url + id
         elif id is not None and uri_type == 'playlist':
-            self.playlist_item_url = self.playlist_url + id
             return self.playlist_paste_url + id
         else:
             dialog = Gtk.MessageDialog(
