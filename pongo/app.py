@@ -32,7 +32,7 @@ class PongoApplication(Gtk.Application):
                                                 title="Pongo")
             window.connect("destroy", self.quit_app)
             window.set_name("finderWindow")
-            window.set_default_size(462, 738)
+            window.set_default_size(768, 768)
             window.move(75, 50)
             window.set_border_width(30)
             box = Gtk.Box(Gtk.Orientation.VERTICAL, 10)

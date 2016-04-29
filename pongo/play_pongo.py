@@ -25,7 +25,7 @@ class PlayPongo(Gtk.Window):
     def __init__(self, app, pongo_server):
         super(Gtk.Window, self).__init__(title='Pongo')
         self.app, self.pongo_server = app, pongo_server
-        self.set_default_size(432, 768)
+        self.set_default_size(768, 768)
         self.search_showing = False
         self.connect("destroy", app.player_destroyed)
         self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)

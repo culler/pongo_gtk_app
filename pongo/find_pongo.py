@@ -45,6 +45,7 @@ class PongoServerRow(Gtk.ListBoxRow):
         super(Gtk.ListBoxRow, self).__init__()
         self.server = server
         self.label = label = Gtk.Label(server.name)
+        label.set_xalign(0.0)
         self.box = box = Gtk.EventBox()
         box.connect('enter_notify_event', self.mouse_enter)
         box.connect('leave_notify_event', self.mouse_leave)
