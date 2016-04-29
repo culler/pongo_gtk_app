@@ -19,8 +19,9 @@ class PlayPongo(Gtk.Window):
     for the Pongo Spotify app, as well as urls with path of the form /pongo/*, which
     are consumed as commands to the app itself.
     """
-    album_paste_path = 'album/paste/'
-    playlist_paste_path = 'playlist/paste/'
+    album_paste_path = 'paste/album/'
+    playlist_paste_path = 'paste/playlist/'
+    paste_error_path = 'paste/error/'
     
     def __init__(self, app, pongo_server):
         super(Gtk.Window, self).__init__(title='Pongo')
@@ -52,6 +53,7 @@ class PlayPongo(Gtk.Window):
         down.connect("clicked", self.search_down)
         self.album_paste_url = self.base_url + self.album_paste_path
         self.playlist_paste_url = self.base_url + self.playlist_paste_path
+        self.paste_error_url = self.base_url + self.paste_error_path
         self.webview.load_uri(self.base_url + 'albums')
 
     def navigate(self, view, frame, request, action, decision):
@@ -81,8 +83,12 @@ class PlayPongo(Gtk.Window):
             command = path.split('/')[-1]
             if command == 'paste_link':
                 url = self.get_paste_url()
-                if url:
-                    self.webview.load_uri(url)
+                self.webview.load_uri(url)
+            elif command == 'go_back':
+                if self.webview.can_go_back():
+                    self.webview.go_back()
+                else:
+                    self.webview.load_uri(self.base_url + 'albums/')
             elif command == 'connect':
                 self.app.back_to_finder()
             elif command == 'search':
@@ -167,13 +173,7 @@ class PlayPongo(Gtk.Window):
         elif id is not None and uri_type == 'playlist':
             return self.playlist_paste_url + id
         else:
-            dialog = Gtk.MessageDialog(
-                self, 0, Gtk.MessageType.INFO,
-                Gtk.ButtonsType.OK,
-                "The clipboard did not contain a valid Spotify link.")
-            dialog.run()
-            dialog.destroy()
-            
+            return self.paste_error_url
 
     def load_error(self, view, frame, uri, error):
         """
