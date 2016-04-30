@@ -42,7 +42,7 @@ class PlayPongo(Gtk.Window):
         self.show_all()
         self.base_url = base_url = 'http://%s/'%self.pongo_server.ip_address
         self.search_box = search_box = Gtk.Box()
-        self.search_entry = search = Gtk.Entry(text='Find')
+        self.search_entry = search = Gtk.SearchEntry()
         search.connect("key-release-event", self.key_action)
         up = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_UP))
         down = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_DOWN))
