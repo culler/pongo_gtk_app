@@ -27,7 +27,6 @@ class PlayPongo(Gtk.Window):
         super(Gtk.Window, self).__init__(title='Pongo')
         self.app, self.pongo_server = app, pongo_server
         self.set_default_size(768, 768)
-        self.search_showing = False
         self.connect("destroy", app.player_destroyed)
         self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         self.scroller = scroller = Gtk.ScrolledWindow()
@@ -41,20 +40,10 @@ class PlayPongo(Gtk.Window):
         box.pack_end(scroller, True, True, 0)
         self.show_all()
         self.base_url = base_url = 'http://%s/'%self.pongo_server.ip_address
-        self.search_box = search_box = Gtk.Box()
-        self.search_entry = search = Gtk.SearchEntry()
-        search.connect("key-release-event", self.key_action)
-        up = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_UP))
-        down = Gtk.Button(None, image=Gtk.Image(stock=Gtk.STOCK_GO_DOWN))
-        search_box.pack_end(down, False, False, 0)
-        search_box.pack_end(up, False, False, 0)
-        search_box.pack_end(search, True, True, 0)
-        up.connect("clicked", self.search_up)
-        down.connect("clicked", self.search_down)
         self.album_paste_url = self.base_url + self.album_paste_path
         self.playlist_paste_url = self.base_url + self.playlist_paste_path
         self.paste_error_url = self.base_url + self.paste_error_path
-        self.webview.load_uri(self.base_url + 'albums')
+        self.webview.load_uri(self.base_url + 'albums/')
 
     def navigate(self, view, frame, request, action, decision):
         """
@@ -85,66 +74,17 @@ class PlayPongo(Gtk.Window):
                 url = self.get_paste_url()
                 self.webview.load_uri(url)
             elif command == 'go_back':
-                if self.webview.can_go_back():
+                if self.webview.can_go_back:
                     self.webview.go_back()
                 else:
                     self.webview.load_uri(self.base_url + 'albums/')
             elif command == 'connect':
                 self.app.back_to_finder()
-            elif command == 'search':
-                self.toggle_search()
             decision.ignore()
             return False
         decision.use()
         return True
 
-    def toggle_search(self):
-        """
-        Toggle the visibility of the search box.
-        """
-        if self.search_showing:
-            self.hide_search()
-        else:
-            self.show_search()
-            
-    def show_search(self):
-        """
-        Expose the search box.
-        """
-        if not self.search_showing:
-            self.box.pack_start(self.search_box, False, False, 0)
-            self.search_showing = True
-            self.show_all()
-            self.search_entry.grab_focus()
-            self.search_entry.select_region(0, -1);
-            
-    def hide_search(self):
-        """
-        Hide the search box.
-        """
-        if  self.search_showing:
-            self.box.remove(self.search_box)
-            self.search_showing = False
-            self.show_all()
-            # BUG: When you search for text, the next matching text
-            # gets selected.  I can find no way to clear the selection
-            # (except reloading the page).  So the text remains
-            # highlighted after the search box is closed.  Clicking on
-            # an inactive part of the page will unhighlight the
-            # selection, though
-
-    def search_up(self, widget):
-        self.webview.search_text(self.search_entry.get_text(),
-                                 False, False, True)
-
-    def search_down(self, widget):
-        self.webview.search_text(self.search_entry.get_text(),
-                                 False, True, True)
-        
-    def key_action(self, widget, event, data=None):
-        if event.keyval == Gdk.KEY_Return:
-            self.search_down(widget)
-            
     def get_paste_url(self):
         id = None
         uri = self.clipboard.wait_for_text()
