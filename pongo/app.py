@@ -94,11 +94,13 @@ class PongoApplication(Gtk.Application):
             self.finder.shutdown()
         self.quit()
         
-if __name__ == '__main__':
-
+def main():
     GObject.threads_init()
     app = PongoApplication()
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     exit_status = app.run(sys.argv)
     app.quit_app()
     sys.exit(exit_status)
+
+if __name__ == '__main__':
+    main()
