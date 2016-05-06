@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=Pongo
+GenericName=Pongo Music
+Comment=Plays music from Spotify or files
+Exec=/usr/local/bin/pongo
+TryExec=pongo
+Icon=PongoIcon.png
+Type=Application
+Terminal=false
+Categories=Utility
+StartupWMClass=pongo
