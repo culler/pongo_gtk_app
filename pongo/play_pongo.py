@@ -6,7 +6,7 @@ import re
 """
 Implementation of the PlayPongo activity.
 """
-spotify = 'https://open.spotify.com'
+spotify = 'https://.*\.spotify\.com'
 album_uri = re.compile('spotify:album:([A-z0-9/\+-_]{22})')
 album_link = re.compile(spotify + '/album/([A-z0-9/\+-_]{22})')
 playlist_uri = re.compile('spotify:user:[^:]*:playlist:([A-z0-9/\+-_]{22})')
@@ -93,17 +93,18 @@ class PlayPongo(Gtk.Window):
             if match:
                 id = match.group(1)
                 uri_type = 'album'
-        elif id is None:
+        if id is None:
             match = album_link.match(uri)
             if match:
                 id = match.group(1)
                 uri_type = 'album'
-        elif id is None:
+                print id
+        if id is None:
             match = playlist_uri.match(uri)
             if match:
                 id = match.group(1)
                 uri_type = 'playlist'
-        elif id is None:
+        if id is None:
             match = playlist_link.match(uri)
             if match:
                 id = match.group(1)
