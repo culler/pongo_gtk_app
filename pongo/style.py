@@ -4,8 +4,8 @@ css = """
 #finderWindow GtkLabel,
 #finderWindow GtkListBox,
 #finderWindow GtkListBoxRow {
-  background-color: #000000;
-  color: #ffffff;
+  background-color: #ffffff;
+  color: #000000;
   font-size: 16px;
 }
 

@@ -53,7 +53,7 @@ class PongoServerRow(Gtk.ListBoxRow):
         self.add(box)
 
     def mouse_enter(self, widget, event, data=None):
-        self.label.set_markup('<b>%s</b>'%self.server.name)
+        self.label.set_markup('<b><span foreground="red">%s</span></b>'%self.server.name)
 
     def mouse_leave(self, widget, event, data=None):
         self.label.set_text(self.server.name)
