@@ -84,7 +84,8 @@ class PlayPongo(Gtk.Window):
                     self.webview.load_uri(self.base_url + 'albums/')
             elif command == 'connect':
                 self.app.back_to_finder()
-                self.iconify()
+                self.webview.destroy()
+                self.hide()
             decision.ignore()
             return False
         decision.use()
