@@ -1,4 +1,4 @@
-from gi.repository import Gtk, Gdk, WebKit, Soup
+from gi.repository import Gtk, Gdk, WebKit2, Soup
 from urlparse import urlparse, parse_qs
 from . import PongoServer
 import re
@@ -30,32 +30,36 @@ class PlayPongo(Gtk.Window):
         self.connect("destroy", app.player_destroyed)
         self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         self.scroller = scroller = Gtk.ScrolledWindow()
-        self.webview = webview = WebKit.WebView()
-        webview.connect("navigation-policy-decision-requested", self.navigate)
-        webview.connect("load-error", self.load_error)
-        self.cookiejar = WebKit.get_default_session().get_feature(Soup.CookieJar)
+        self.webview = webview = WebKit2.WebView()
+        webview.connect("decide-policy", self.navigate)
+        webview.connect("load-failed", self.load_error)
+        self.cookiejar = WebKit2.CookieManager()
         scroller.add(webview)
         self.box = box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(box)
         box.pack_end(scroller, True, True, 0)
+        self.load(pongo_server)
         self.show_all()
+
+    def load(self, pongo_server):
         self.base_url = base_url = 'http://%s/'%self.pongo_server.ip_address
         self.album_paste_url = self.base_url + self.album_paste_path
         self.playlist_paste_url = self.base_url + self.playlist_paste_path
         self.paste_error_url = self.base_url + self.paste_error_path
         self.webview.load_uri(self.base_url + 'albums/')
-
-    def navigate(self, view, frame, request, action, decision):
+    
+    def navigate(self, view, decision, decision_type):
         """
         Controls navigation through the Pongo pages.
         """
-        url = request.get_uri()
+        if decision_type != WebKit2.PolicyDecisionType.NAVIGATION_ACTION:
+            decision.use()
+            return True
+        url = decision.get_request().get_uri()
         parts = urlparse(url)
         # Handle Spotify authentication redirects
         if parts.hostname == 'localhost' and parts.port == 8880:
-            for cookie in self.cookiejar.all_cookies():
-                if cookie.get_domain().endswith('spotify.com'):
-                    self.cookiejar.delete_cookie(cookie)
+            self.cookiejar.delete_cookies_for_domain('spotify.com')
             query_info = parse_qs(parts.query)
             return_page = query_info['state'][0]
             auth_code = query_info['code'][0]
@@ -80,6 +84,7 @@ class PlayPongo(Gtk.Window):
                     self.webview.load_uri(self.base_url + 'albums/')
             elif command == 'connect':
                 self.app.back_to_finder()
+                self.iconify()
             decision.ignore()
             return False
         decision.use()

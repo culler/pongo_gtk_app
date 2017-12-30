@@ -1,7 +1,7 @@
 import sys, signal, socket
 import gi
 gi.require_version('Gtk', '3.0')
-gi.require_version('WebKit', '3.0')
+gi.require_version('WebKit2', '4.0')
 gi.require_version('Gst', '1.0')
 from gi.repository import Gtk, Gdk, GObject
 from . import PongoServer
@@ -69,9 +69,9 @@ class PongoApplication(Gtk.Application):
             self.IPentry.set_text('unknown')
         
     def play_pongo(self, server):
-        self.player = player = PlayPongo(self, server)
-        player.move(75, 50)
-        player.show_all()
+        self.player = PlayPongo(self, server)
+        self.player.move(75, 50)
+        self.player.show_all()
         self.window.iconify()
 
     def player_destroyed(self, widget):
@@ -83,7 +83,6 @@ class PongoApplication(Gtk.Application):
     def back_to_finder(self):
         self.window.present()
         self.restore_finder = True
-        self.player.destroy()
         self.player = None
             
     def do_startup(self):
