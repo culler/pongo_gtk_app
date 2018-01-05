@@ -1,6 +1,7 @@
 from gi.repository import Gtk, Gdk, WebKit2, Soup
 from urlparse import urlparse, parse_qs
 from . import PongoServer
+from .templates import error_template
 import re
 
 """
@@ -11,7 +12,8 @@ album_uri = re.compile('spotify:album:([A-z0-9/\+-_]{22})')
 album_link = re.compile(spotify + '/album/([A-z0-9/\+-_]{22})')
 playlist_uri = re.compile('spotify:user:[^:]*:playlist:([A-z0-9/\+-_]{22})')
 playlist_link = re.compile(spotify + '/user/[^:]*/playlist/([A-z0-9/\+-_]{22})')
-                             
+
+
 class PlayPongo(Gtk.Window):
     """
     A WebView window connected to a Pongo server.  This WebView traps connections
@@ -126,19 +128,5 @@ class PlayPongo(Gtk.Window):
         """
         Custom error screen to display when the http connection fails.
         """
-        self.webview.load_html("""
-        <html>
-        <head><title>Error</title></head>
-        <body>
-        <h1 style="text-align: center;">So Sorry!</h1>
-        <h2 style="text-align: center; font-size: 24px;">Could not connect to %s.</h2>
-        <div style="text-align: center;">
-        <a style="-webkit-appearance: button;
-                  text-decoration: none;
-                  color: initial;
-                  padding: 5px;"
-           href="%s">Try again</a>
-        </div>
-        </body>
-        </html>"""%(self.pongo_server.name, uri))
+        self.webview.load_html(error_template%(self.pongo_server.name, uri))
         return True
