@@ -46,7 +46,6 @@ class PlayPongo(Gtk.Window):
         self.album_paste_url = self.base_url + self.album_paste_path
         self.playlist_paste_url = self.base_url + self.playlist_paste_path
         self.paste_error_url = self.base_url + self.paste_error_path
-        print 'connecting to', self.base_url + 'albums/'
         self.webview.load_uri(self.base_url + 'albums/')
     
     def navigate(self, view, decision, decision_type):
