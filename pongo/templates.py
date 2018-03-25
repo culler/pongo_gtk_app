@@ -1,7 +1,7 @@
 error_template = """
 <html>
-<head><title>Error</title></head>
-<body>
+<head>
+<title>Error</title>
 <style type="text/css">
 body {
 font-family: sans-serif;
@@ -26,6 +26,8 @@ div{
 margin-top: 40px;
 }
 </style>
+</head>
+<body>
 <h1>So Sorry!</h1>
 <h2>Could not connect to %s.</h2>
 <div>
@@ -33,6 +35,7 @@ margin-top: 40px;
 </div>
 <div>
 <a class="button" href="http://load.error/pongo/connect">Go Back</a>
+</div>
 </body>
 </html>
 """
