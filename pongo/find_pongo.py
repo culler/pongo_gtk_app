@@ -32,8 +32,8 @@ class PongoListener(object):
     def pongo_server(self, service_type, name, zeroconf):
         info = zeroconf.get_service_info(service_type, name)
         if info:
-            if info.properties.get('path', None) == '/pongo':
-                address = '.'.join([str(ord(c)) for c in info.address]) + ':%s'%info.port
+            if info.properties.get(b'path', b'').decode('utf-8') == '/pongo':
+                address = '.'.join(['%d'%c for c in info.address]) + ':%s'%info.port
                 return PongoServer(info.name.split('.')[0], address)
 
 class PongoServerRow(Gtk.ListBoxRow):

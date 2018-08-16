@@ -10,7 +10,7 @@ from .play_pongo import PlayPongo
 from .style import css
 
 style = Gtk.CssProvider()
-style.load_from_data(css)
+style.load_from_data(css.encode('utf-8'))
 Gtk.StyleContext.add_provider_for_screen(
     Gdk.Screen.get_default(), 
     style,     

@@ -1,5 +1,5 @@
 from gi.repository import Gtk, Gdk, WebKit2, Soup
-from urlparse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs
 from . import PongoServer
 from .templates import error_template
 import re
@@ -106,7 +106,6 @@ class PlayPongo(Gtk.Window):
             if match:
                 id = match.group(1)
                 uri_type = 'album'
-                print id
         if id is None:
             match = playlist_uri.match(uri)
             if match:
